@@ -1,0 +1,121 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <div class="flex items-center gap-2">
+                <a href="/siswa-aktif?class={{.Student.CurrentClass}}" class="text-slate-400 hover:text-slate-600 text-xs font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-arrow-left"></i> Kembali ke Siswa Aktif
+                </a>
+            </div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2 mt-1">
+                <i class="fa-solid fa-pen-ruler text-emerald-600"></i> Input Nilai Raport Digital (RDM)
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Formulir capaian pembelajaran oleh Wali Kelas {{.Student.CurrentClass}}. Nilai otomatis tampil pada menu RDM akun siswa.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                <i class="fa-solid fa-chalkboard-user"></i> Rombel: {{.Student.CurrentClass}}
+            </span>
+        </div>
+    </div>
+
+    <!-- Alert Success -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Identitas Siswa -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 text-xs">
+            <div class="p-3 sm:p-3.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 text-[10px] sm:text-[11px] block uppercase font-semibold">Nama Siswa</span>
+                <span class="font-extrabold text-slate-800 text-xs sm:text-sm mt-0.5 block truncate">{{.Student.Field01FullName}}</span>
+            </div>
+            <div class="p-3 sm:p-3.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 text-[10px] sm:text-[11px] block uppercase font-semibold">NIS Lokal</span>
+                <span class="font-mono font-bold text-emerald-700 text-xs sm:text-sm mt-0.5 block truncate">{{.Student.NISLokal}}</span>
+            </div>
+            <div class="p-3 sm:p-3.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 text-[10px] sm:text-[11px] block uppercase font-semibold">NISN</span>
+                <span class="font-mono font-bold text-slate-700 text-xs sm:text-sm mt-0.5 block truncate">{{.Student.NISN}}</span>
+            </div>
+            <div class="p-3 sm:p-3.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 text-[10px] sm:text-[11px] block uppercase font-semibold">Status Siswa</span>
+                <span class="font-bold text-emerald-700 text-xs sm:text-sm mt-0.5 flex items-center gap-1.5 truncate">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                    {{.Student.StatusKeaktifan}}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- FORM INPUT NILAI RDM -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4 sm:mb-6 gap-2">
+            <div>
+                <h3 class="font-bold text-sm text-slate-800">Tabel Aspek Perkembangan & Nilai Rapor</h3>
+                <p class="text-[11px] text-slate-400 mt-0.5">Ubah nilai angka, predikat, dan deskripsi capaian:</p>
+            </div>
+            <span class="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200 self-start sm:self-auto">
+                Semester Ganjil &bull; {{.School.CurrentYear}}
+            </span>
+        </div>
+
+        <form action="/admin/rdm-input" method="POST" class="space-y-4 sm:space-y-6">
+            <input type="hidden" name="nik" value="{{.Student.Field05NIK}}">
+
+            <div class="space-y-3 sm:space-y-4" id="gradesContainer">
+                {{range $index, $g := .Grades}}
+                <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50/70 border border-slate-200 space-y-3">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-slate-700 mb-1">Mata Pelajaran / Aspek Perkembangan</label>
+                            <input type="text" name="subject_{{$index}}" value="{{$g.SubjectName}}" required
+                                class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+                            <div class="w-full sm:w-28">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 text-center">Nilai (0-100)</label>
+                                <input type="number" min="0" max="100" name="score_{{$index}}" value="{{$g.Score}}" required
+                                    class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-bold text-center text-emerald-700 focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <div class="w-full sm:w-28">
+                                <label class="block text-[11px] font-bold text-slate-700 mb-1 text-center">Predikat</label>
+                                <select name="predicate_{{$index}}" class="w-full text-xs px-3 py-2 bg-white border border-slate-200 rounded-lg font-bold text-center">
+                                    <option value="A" {{if eq $g.Predicate "A"}}selected{{end}}>A (Sangat Baik)</option>
+                                    <option value="B" {{if eq $g.Predicate "B"}}selected{{end}}>B (Baik)</option>
+                                    <option value="C" {{if eq $g.Predicate "C"}}selected{{end}}>C (Cukup)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1">Deskripsi Capaian Perkembangan Anak (Catatan Guru)</label>
+                        <textarea name="description_{{$index}}" rows="2" required
+                            class="w-full text-xs p-3 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none leading-relaxed">{{$g.Description}}</textarea>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="pt-3 sm:pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                <a href="/siswa-aktif?class={{.Student.CurrentClass}}" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold text-center">
+                    Batal
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-floppy-disk"></i> Simpan Nilai RDM Siswa
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{{end}}

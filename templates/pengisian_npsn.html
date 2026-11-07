@@ -1,0 +1,143 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-file-import"></i>
+            </div>
+            <div>
+                <h1 class="text-lg sm:text-xl font-extrabold text-slate-800">Pengisian NISN dari EMIS</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">Impor data EMIS, tinjau perbedaan NISN, lalu konfirmasi koreksi setelah nama dan NIK cocok.</p>
+            </div>
+        </div>
+    </section>
+
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 flex-shrink-0"></i><span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+    {{if .ErrorMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-red-600 flex-shrink-0"></i><span class="font-bold text-xs sm:text-sm">{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h2 class="font-bold text-sm sm:text-base text-slate-800">Impor file NISN</h2>
+                <p class="text-xs text-slate-500 mt-1">Pilih file Excel (.xlsx) dari EMIS atau CSV dengan kolom <b>Nama Lengkap</b>, <b>NISN</b>, dan <b>NIK</b>.</p>
+            </div>
+            <a href="/static/template_import_nisn.csv" download class="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs font-bold border border-emerald-200">
+                <i class="fa-solid fa-download"></i> Unduh Template CSV
+            </a>
+        </div>
+        <form action="/pengisian-nisn" method="POST" enctype="multipart/form-data" class="mt-5 space-y-3">
+            <input type="hidden" name="action" value="preview">
+            <label for="nisn_file" class="block text-xs font-bold text-slate-700">File data EMIS (.xlsx atau .csv)</label>
+            <input id="nisn_file" name="nisn_file" type="file" accept=".xlsx,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv" required
+                class="block w-full min-w-0 text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-3 file:py-2 file:font-bold file:text-emerald-700 hover:file:bg-emerald-100 border border-slate-200 rounded-xl bg-slate-50 p-2">
+            <p class="text-[11px] text-slate-500">Sistem mencocokkan NIK dan nama sekaligus. NISN harus 10 angka dan NIK 16 angka. NISN lama tidak langsung ditimpa: perubahan ditampilkan dahulu dan baru disimpan setelah dikonfirmasi.</p>
+            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition">
+                <i class="fa-solid fa-magnifying-glass"></i> Tinjau File
+            </button>
+        </form>
+    </section>
+
+    {{if .PreviewRows}}
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+        <div class="flex items-start gap-3 mb-4">
+            <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div>
+                <h2 class="font-bold text-sm sm:text-base text-slate-800">Pratinjau Impor dan Koreksi NISN</h2>
+                <p class="text-xs text-slate-500 mt-1">Periksa NISN lama dan nilai dari file EMIS. Data hanya disimpan setelah tombol konfirmasi ditekan.</p>
+            </div>
+        </div>
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full min-w-[760px] text-xs text-left">
+                <thead class="bg-slate-50 text-slate-600">
+                    <tr>
+                        <th class="px-3 py-3 font-bold">Nama Siswa</th>
+                        <th class="px-3 py-3 font-bold">NIK</th>
+                        <th class="px-3 py-3 font-bold">NISN Tersimpan</th>
+                        <th class="px-3 py-3 font-bold">NISN dari EMIS</th>
+                        <th class="px-3 py-3 font-bold">Tindakan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {{range .PreviewRows}}
+                    <tr class="{{if eq .Action "replace"}}bg-amber-50{{else if eq .Action "fill"}}bg-emerald-50/50{{end}}">
+                        <td class="px-3 py-3 font-semibold text-slate-800">{{.FullName}}</td>
+                        <td class="px-3 py-3 font-mono text-slate-600">{{.NIK}}</td>
+                        <td class="px-3 py-3 font-mono {{if eq .Action "replace"}}text-amber-800 font-bold{{else}}text-slate-600{{end}}">{{if .OldNISN}}{{.OldNISN}}{{else}}<span class="italic text-slate-400">Kosong</span>{{end}}</td>
+                        <td class="px-3 py-3 font-mono font-bold text-emerald-800">{{.NewNISN}}</td>
+                        <td class="px-3 py-3">
+                            {{if eq .Action "replace"}}
+                            <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 font-bold text-amber-800">{{.ActionLabel}}</span>
+                            {{else if eq .Action "fill"}}
+                            <span class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 font-bold text-emerald-800">{{.ActionLabel}}</span>
+                            {{else if eq .Action "unchanged"}}
+                            <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 font-bold text-slate-600">{{.ActionLabel}}</span>
+                            {{else}}
+                            <span class="inline-flex rounded-full bg-red-50 px-2.5 py-1 font-bold text-red-700">{{.ActionLabel}}</span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+        <form action="/pengisian-nisn" method="POST" class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <input type="hidden" name="action" value="confirm">
+            <input type="hidden" name="preview_token" value="{{.PreviewToken}}">
+            <a href="/pengisian-nisn" class="inline-flex justify-center items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50">
+                <i class="fa-solid fa-xmark"></i> Batal / Unggah Ulang
+            </a>
+            {{if .PreviewHasChanges}}
+            <button type="submit" onclick="return confirm('Konfirmasi perubahan NISN sesuai pratinjau? Nilai NISN lama pada baris koreksi akan diganti.')" class="inline-flex justify-center items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700">
+                <i class="fa-solid fa-check"></i> Konfirmasi &amp; Simpan
+            </button>
+            {{else}}
+            <span class="text-xs font-semibold text-slate-500">Tidak ada perubahan yang dapat disimpan.</span>
+            {{end}}
+        </form>
+    </section>
+    {{end}}
+
+    {{if .ChangeLogs}}
+    <section class="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 sm:p-6">
+        <h2 class="font-bold text-sm sm:text-base text-slate-800 flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-clock-rotate-left text-slate-500"></i> Riwayat Perubahan NISN
+        </h2>
+        <div class="overflow-x-auto rounded-xl border border-slate-200">
+            <table class="w-full min-w-[680px] text-xs text-left">
+                <thead class="bg-slate-50 text-slate-600">
+                    <tr>
+                        <th class="px-3 py-3 font-bold">Waktu</th>
+                        <th class="px-3 py-3 font-bold">Nama Siswa</th>
+                        <th class="px-3 py-3 font-bold">NISN Lama</th>
+                        <th class="px-3 py-3 font-bold">NISN Baru</th>
+                        <th class="px-3 py-3 font-bold">Diubah oleh</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {{range .ChangeLogs}}
+                    <tr>
+                        <td class="px-3 py-3 text-slate-500">{{formatDate .ChangedAt}}</td>
+                        <td class="px-3 py-3 font-semibold text-slate-800">{{.StudentName}}</td>
+                        <td class="px-3 py-3 font-mono text-slate-600">{{if .OldNISN}}{{.OldNISN}}{{else}}<span class="italic text-slate-400">Kosong</span>{{end}}</td>
+                        <td class="px-3 py-3 font-mono font-bold text-emerald-800">{{.NewNISN}}</td>
+                        <td class="px-3 py-3 font-mono text-slate-600">{{.ChangedBy}}</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    {{end}}
+
+</div>
+{{end}}

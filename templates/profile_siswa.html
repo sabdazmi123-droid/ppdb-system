@@ -1,0 +1,724 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section (Responsif Mobile) -->
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <div class="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+                <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-id-card text-emerald-600"></i> Data Formulir Calon Siswa
+                </h1>
+                
+                <!-- STATUS SISWA -->
+                {{if or (eq .Student.StatusKeaktifan "Siswa Aktif") (eq .Student.PPDBStatus "DISETUJUI")}}
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-600 text-white shadow-sm border border-emerald-400">
+                    <span class="w-2 h-2 rounded-full bg-white animate-pulse"></span>
+                    <span>SISWA AKTIF</span>
+                    {{if .Student.CurrentClass}}
+                    <span class="bg-emerald-800/80 px-1.5 py-0.5 rounded text-[10px] font-semibold text-emerald-100">
+                        {{.Student.CurrentClass}}
+                    </span>
+                    {{end}}
+                </div>
+                {{else if eq .Student.PPDBStatus "PERLU_PERBAIKAN"}}
+                <span class="px-3 py-1 rounded-full text-xs font-extrabold bg-red-600 text-white shadow-sm flex items-center gap-1.5 animate-pulse">
+                    <i class="fa-solid fa-triangle-exclamation"></i> PERLU PERBAIKAN
+                </span>
+                {{else}}
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 flex items-center gap-1.5">
+                    <i class="fa-regular fa-clock"></i> CALON SISWA
+                </span>
+                {{end}}
+            </div>
+            <p class="text-xs text-slate-500 mt-1">
+                Silakan lengkapi formulir pendaftaran di bawah ini dengan data yang benar dan sesuai.
+                {{if .Student.NISLokal}}
+                <span class="font-bold text-emerald-700 ml-1 block sm:inline">NIS Lokal: {{.Student.NISLokal}}</span>
+                {{end}}
+            </p>
+        </div>
+
+        <!-- Tombol Aksi Header -->
+        <div class="flex items-center gap-2">
+            <a href="/formulir/cetak?nik={{.Student.Field05NIK}}" target="_blank"
+                class="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5 text-center">
+                <i class="fa-solid fa-print"></i> <span>Cetak Form</span>
+            </a>
+
+            {{if .CanEditProfile}}
+            <button type="submit" form="studentProfileForm"
+                class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 text-center">
+                <i class="fa-solid fa-floppy-disk"></i> <span>Simpan Perubahan</span>
+            </button>
+            {{else}}
+            <button type="button" disabled title="Formulir sedang menunggu verifikasi"
+                class="px-5 py-2.5 bg-slate-300 text-slate-600 font-bold text-xs rounded-xl cursor-not-allowed flex items-center justify-center gap-1.5 text-center">
+                <i class="fa-solid fa-lock"></i> <span>Formulir Terkunci</span>
+            </button>
+            {{end}}
+        </div>
+    </div>
+
+    <!-- Alert Success -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 text-xs sm:text-sm font-bold">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-base flex-shrink-0"></i>
+        <span>{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+
+    {{if .ErrorMsg}}
+    <div id="profileServerError" class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-start gap-3 text-xs sm:text-sm font-bold" role="alert">
+        <i class="fa-solid fa-circle-exclamation text-red-600 text-base flex-shrink-0 mt-0.5"></i>
+        <span>{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    {{if not .CanEditProfile}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 flex items-start gap-3 text-xs sm:text-sm font-semibold" role="status">
+        <i class="fa-solid fa-lock text-blue-600 text-base flex-shrink-0 mt-0.5"></i>
+        {{if or (eq .Student.PPDBStatus "DISETUJUI") (eq .Student.StatusKeaktifan "Siswa Aktif")}}
+        <span>Formulir sudah disetujui dan terkunci. Hubungi admin jika perlu mengubah data.</span>
+        {{else}}
+        <span>Formulir sudah diajukan dan sedang menunggu verifikasi. Jika ditolak, formulir akan terbuka kembali untuk diperbaiki.</span>
+        {{end}}
+    </div>
+    {{end}}
+
+    {{if .Student.ProfileEditAllowed}}
+    <div class="p-4 sm:p-5 rounded-2xl border border-amber-300 bg-amber-50 text-amber-950 shadow-sm flex items-start gap-3" role="status">
+        <i class="fa-solid fa-pen-to-square mt-0.5 text-amber-700"></i>
+        <div>
+            <h3 class="font-extrabold text-sm">Formulir dibuka untuk perbaikan</h3>
+            <p class="mt-1 text-xs">Status siswa dan kelas tetap aktif. Silakan perbaiki data berikut: {{.Student.ProfileEditNotes}}</p>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- ALERT MERAH JIKA PERLU PERBAIKAN -->
+    {{if eq .Student.PPDBStatus "PERLU_PERBAIKAN"}}
+    <div class="p-4 sm:p-5 rounded-2xl bg-red-600 text-white shadow-lg flex items-start gap-3 sm:gap-4 border-2 border-red-700">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h3 class="font-black text-sm sm:text-base tracking-wide uppercase">FORMULIR PERLU PERBAIKAN</h3>
+            <p class="text-xs text-red-100 mt-1">Catatan Verifikator Panitia PPDB:</p>
+            <div class="mt-2 p-3 bg-red-800/80 rounded-xl font-bold text-xs sm:text-sm text-yellow-200 border border-red-500/50 break-words">
+                "{{.Student.RevisionNotes}}"
+            </div>
+            <p class="text-[11px] text-red-100 mt-2">
+                Silakan sesuaikan data pada kolom di bawah ini, lalu klik <b>"Simpan Perubahan"</b>.
+            </p>
+        </div>
+    </div>
+    {{end}}
+
+    <!-- FORM 50 PERTANYAAN RESMI -->
+    <form id="studentProfileForm" action="/profile-siswa?nik={{.Student.Field05NIK}}" method="POST" novalidate data-uppercase="true" data-server-error="{{if .ErrorMsg}}true{{else}}false{{end}}" data-can-edit="{{if .CanEditProfile}}true{{else}}false{{end}}"
+        class="bg-white rounded-2xl p-4 sm:p-6 lg:p-8 border border-slate-100 shadow-sm space-y-6 sm:space-y-8">
+        
+        <!-- ========================================== -->
+        <!-- BAGIAN 1: IDENTITAS DIRI SISWA             -->
+        <!-- ========================================== -->
+        <div>
+            <div class="border-b border-slate-200 pb-2.5 mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">1</span>
+                    Data Diri Calon Siswa
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">1. Nama Lengkap Siswa *</label>
+                    <input type="text" name="f01_full_name" value="{{.Student.Field01FullName}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Sesuai akta kelahiran / KK</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">2. Tempat Lahir *</label>
+                    <input type="text" name="f02_birth_place" value="{{.Student.Field02BirthPlace}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">3. Tanggal Lahir *</label>
+                    <input type="date" name="f03_birth_date" value="{{.Student.Field03BirthDate}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">4. Kewarganegaraan *</label>
+                    <select name="f04_nationality" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Kewarganegaraan --</option>
+                        <option value="WARGA NEGARA INDONESIA / WNI" {{if or (eq .Student.Field04Nationality "WARGA NEGARA INDONESIA / WNI") (not .Student.Field04Nationality)}}selected{{end}}>WARGA NEGARA INDONESIA / WNI</option>
+                        <option value="WARGA NEGARA ASING / WNA" {{if eq .Student.Field04Nationality "WARGA NEGARA ASING / WNA"}}selected{{end}}>WARGA NEGARA ASING / WNA</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">5. Nomor Induk Kependudukan (NIK) *</label>
+                    <input type="text" name="f05_nik" value="{{.Student.Field05NIK}}" readonly class="w-full text-xs px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl font-mono font-bold text-slate-700 cursor-not-allowed">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Terkunci otomatis dari akun</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">6. Jenis Kelamin *</label>
+                    <select name="f06_gender" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Jenis Kelamin --</option>
+                        <option value="LAKI-LAKI" {{if eq .Student.Field06Gender "LAKI-LAKI"}}selected{{end}}>LAKI-LAKI</option>
+                        <option value="PEREMPUAN" {{if eq .Student.Field06Gender "PEREMPUAN"}}selected{{end}}>PEREMPUAN</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">7. Agama *</label>
+                    <select name="f07_religion" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Agama --</option>
+                        <option value="ISLAM" {{if or (eq .Student.Field07Religion "ISLAM") (not .Student.Field07Religion)}}selected{{end}}>ISLAM</option>
+                        <option value="KRISTEN" {{if eq .Student.Field07Religion "KRISTEN"}}selected{{end}}>KRISTEN</option>
+                        <option value="HINDU" {{if eq .Student.Field07Religion "HINDU"}}selected{{end}}>HINDU</option>
+                        <option value="BUDHA" {{if eq .Student.Field07Religion "BUDHA"}}selected{{end}}>BUDHA</option>
+                        <option value="KONGHUCU" {{if eq .Student.Field07Religion "KONGHUCU"}}selected{{end}}>KONGHUCU</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">8. Anak Ke - *</label>
+                    <input type="number" name="f08_child_order" value="{{if .Student.Field08ChildOrder}}{{.Student.Field08ChildOrder}}{{else}}1{{end}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">9. Jumlah Saudara *</label>
+                    <input type="number" name="f09_siblings_count" value="{{.Student.Field09SiblingsCount}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-semibold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">10. Jarak Tempat Tinggal ke Sekolah</label>
+                    <select name="f10_distance" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Jarak --</option>
+                        <option value="KURANG DARI 5 KM" {{if eq .Student.Field10Distance "KURANG DARI 5 KM"}}selected{{end}}>KURANG DARI 5 KM</option>
+                        <option value="ANTARA 5-10 KM" {{if eq .Student.Field10Distance "ANTARA 5-10 KM"}}selected{{end}}>ANTARA 5-10 KM</option>
+                        <option value="ANTARA 11-20 KM" {{if eq .Student.Field10Distance "ANTARA 11-20 KM"}}selected{{end}}>ANTARA 11-20 KM</option>
+                        <option value="ANTARA 21-30 KM" {{if eq .Student.Field10Distance "ANTARA 21-30 KM"}}selected{{end}}>ANTARA 21-30 KM</option>
+                        <option value="LEBIH DARI 30 KM" {{if eq .Student.Field10Distance "LEBIH DARI 30 KM"}}selected{{end}}>LEBIH DARI 30 KM</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">11. Transportasi yang Digunakan ke Sekolah *</label>
+                    <select name="f11_transport" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Transportasi --</option>
+                        <option value="SEPEDA" {{if eq .Student.Field11Transport "SEPEDA"}}selected{{end}}>SEPEDA</option>
+                        <option value="SEPEDA MOTOR" {{if eq .Student.Field11Transport "SEPEDA MOTOR"}}selected{{end}}>SEPEDA MOTOR</option>
+                        <option value="MOBIL" {{if eq .Student.Field11Transport "MOBIL"}}selected{{end}}>MOBIL</option>
+                        <option value="ANGKUTAN UMUM" {{if eq .Student.Field11Transport "ANGKUTAN UMUM"}}selected{{end}}>ANGKUTAN UMUM</option>
+                        <option value="JALAN KAKI" {{if eq .Student.Field11Transport "JALAN KAKI"}}selected{{end}}>JALAN KAKI</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">12. Waktu Tempuh ke Sekolah Berapa Menit? *</label>
+                    <select name="f12_travel_time_min" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Waktu Tempuh --</option>
+                        <option value="10" {{if eq .Student.Field12TravelTimeMin 10}}selected{{end}}>KURANG DARI 10 MENIT</option>
+                        <option value="15" {{if eq .Student.Field12TravelTimeMin 15}}selected{{end}}>10-19 MENIT</option>
+                        <option value="25" {{if eq .Student.Field12TravelTimeMin 25}}selected{{end}}>20-29 MENIT</option>
+                        <option value="45" {{if eq .Student.Field12TravelTimeMin 45}}selected{{end}}>30-59 MENIT</option>
+                        <option value="60" {{if eq .Student.Field12TravelTimeMin 60}}selected{{end}}>1-2 JAM</option>
+                        <option value="120" {{if eq .Student.Field12TravelTimeMin 120}}selected{{end}}>LEBIH DARI 2 JAM</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">13. Nomor HP / WhatsApp Aktif *</label>
+                    <input type="text" name="f13_phone_wa" value="{{.Student.Field13PhoneWA}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono font-bold">
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- BAGIAN 2: DATA KELUARGA & AYAH KANDUNG    -->
+        <!-- ========================================== -->
+        <div>
+            <div class="border-b border-slate-200 pb-2.5 mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">2</span>
+                    Data Keluarga & Ayah Kandung
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">14. Nomor Kartu Keluarga (KK) *</label>
+                    <input type="text" name="f14_no_kk" value="{{.Student.Field14NoKK}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Sesuai KK resmi</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">15. Nama Kepala Keluarga *</label>
+                    <input type="text" name="f15_family_head" value="{{.Student.Field15FamilyHead}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">16. Nama Ayah Kandung *</label>
+                    <input type="text" name="f16_father_name" value="{{.Student.Field16FatherName}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">17. Status Ayah Kandung *</label>
+                    <select name="f17_father_status" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Status Ayah --</option>
+                        <option value="MASIH HIDUP" {{if or (eq .Student.Field17FatherStatus "MASIH HIDUP") (not .Student.Field17FatherStatus)}}selected{{end}}>MASIH HIDUP</option>
+                        <option value="SUDAH MENINGGAL" {{if eq .Student.Field17FatherStatus "SUDAH MENINGGAL"}}selected{{end}}>SUDAH MENINGGAL</option>
+                        <option value="TIDAK DIKETAHUI" {{if eq .Student.Field17FatherStatus "TIDAK DIKETAHUI"}}selected{{end}}>TIDAK DIKETAHUI</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">18. NIK Ayah *</label>
+                    <input type="text" name="f18_father_nik" value="{{.Student.Field18FatherNIK}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Sesuai KK</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">19. Tempat Lahir Ayah *</label>
+                    <input type="text" name="f19_father_birth_pl" value="{{.Student.Field19FatherBirthPl}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">20. Tanggal / Tahun Lahir Ayah *</label>
+                    <input type="date" name="f20_father_birth_yr" value="{{.Student.Field20FatherBirthYr}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">21. Pendidikan Ayah *</label>
+                    <select name="f21_father_edu" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Pendidikan Ayah --</option>
+                        <option value="TIDAK BERPENDIDIKAN" {{if eq .Student.Field21FatherEdu "TIDAK BERPENDIDIKAN"}}selected{{end}}>TIDAK BERPENDIDIKAN</option>
+                        <option value="SD/SEDERAJAT" {{if eq .Student.Field21FatherEdu "SD/SEDERAJAT"}}selected{{end}}>SD/SEDERAJAT</option>
+                        <option value="SMP/SEDERAJAT" {{if eq .Student.Field21FatherEdu "SMP/SEDERAJAT"}}selected{{end}}>SMP/SEDERAJAT</option>
+                        <option value="SMA/SEDERAJAT" {{if eq .Student.Field21FatherEdu "SMA/SEDERAJAT"}}selected{{end}}>SMA/SEDERAJAT</option>
+                        <option value="D1" {{if eq .Student.Field21FatherEdu "D1"}}selected{{end}}>D1</option>
+                        <option value="D2" {{if eq .Student.Field21FatherEdu "D2"}}selected{{end}}>D2</option>
+                        <option value="D3" {{if eq .Student.Field21FatherEdu "D3"}}selected{{end}}>D3</option>
+                        <option value="D4/S1" {{if eq .Student.Field21FatherEdu "D4/S1"}}selected{{end}}>D4/S1</option>
+                        <option value="S2" {{if eq .Student.Field21FatherEdu "S2"}}selected{{end}}>S2</option>
+                        <option value="S3" {{if eq .Student.Field21FatherEdu "S3"}}selected{{end}}>S3</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">22. Pekerjaan Ayah *</label>
+                    <select name="f22_father_job" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Pekerjaan Ayah --</option>
+                        <option value="TIDAK BEKERJA" {{if eq .Student.Field22FatherJob "TIDAK BEKERJA"}}selected{{end}}>TIDAK BEKERJA</option>
+                        <option value="PENSIUNAN" {{if eq .Student.Field22FatherJob "PENSIUNAN"}}selected{{end}}>PENSIUNAN</option>
+                        <option value="PNS DI INSTANSI PEMERINTAH" {{if eq .Student.Field22FatherJob "PNS DI INSTANSI PEMERINTAH"}}selected{{end}}>PNS DI INSTANSI PEMERINTAH</option>
+                        <option value="TNI/POLISI" {{if eq .Student.Field22FatherJob "TNI/POLISI"}}selected{{end}}>TNI/POLISI</option>
+                        <option value="GURU/DOSEN" {{if eq .Student.Field22FatherJob "GURU/DOSEN"}}selected{{end}}>GURU/DOSEN</option>
+                        <option value="PEGAWAI SWASTA" {{if eq .Student.Field22FatherJob "PEGAWAI SWASTA"}}selected{{end}}>PEGAWAI SWASTA</option>
+                        <option value="WIRASWASTA/WIRAUSAHA" {{if eq .Student.Field22FatherJob "WIRASWASTA/WIRAUSAHA"}}selected{{end}}>WIRASWASTA/WIRAUSAHA</option>
+                        <option value="PENGACARA/HAKIM/JAKSA/NOTARIS" {{if eq .Student.Field22FatherJob "PENGACARA/HAKIM/JAKSA/NOTARIS"}}selected{{end}}>PENGACARA/HAKIM/JAKSA/NOTARIS</option>
+                        <option value="SENIMAN/ARTIS/PELUKIS/SEJENIS" {{if eq .Student.Field22FatherJob "SENIMAN/ARTIS/PELUKIS/SEJENIS"}}selected{{end}}>SENIMAN/ARTIS/PELUKIS/SEJENIS</option>
+                        <option value="DOKTER/BIDAN/PERAWAT" {{if eq .Student.Field22FatherJob "DOKTER/BIDAN/PERAWAT"}}selected{{end}}>DOKTER/BIDAN/PERAWAT</option>
+                        <option value="PILOT/PRAMUGARI" {{if eq .Student.Field22FatherJob "PILOT/PRAMUGARI"}}selected{{end}}>PILOT/PRAMUGARI</option>
+                        <option value="PEDAGANG" {{if eq .Student.Field22FatherJob "PEDAGANG"}}selected{{end}}>PEDAGANG</option>
+                        <option value="PETANI/PETERNAK" {{if eq .Student.Field22FatherJob "PETANI/PETERNAK"}}selected{{end}}>PETANI/PETERNAK</option>
+                        <option value="NELAYAN" {{if eq .Student.Field22FatherJob "NELAYAN"}}selected{{end}}>NELAYAN</option>
+                        <option value="BURUH PABRIK/BANGUNAN" {{if eq .Student.Field22FatherJob "BURUH PABRIK/BANGUNAN"}}selected{{end}}>BURUH PABRIK/BANGUNAN</option>
+                        <option value="SOPIR/MASINIS/KONDEKTUR" {{if eq .Student.Field22FatherJob "SOPIR/MASINIS/KONDEKTUR"}}selected{{end}}>SOPIR/MASINIS/KONDEKTUR</option>
+                        <option value="POLITIKUS" {{if eq .Student.Field22FatherJob "POLITIKUS"}}selected{{end}}>POLITIKUS</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">23. Penghasilan Ayah Per Bulan *</label>
+                    <select name="f23_father_income" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Penghasilan Ayah --</option>
+                        <option value="KURANG DARI RP. 500.000" {{if eq .Student.Field23FatherIncome "KURANG DARI RP. 500.000"}}selected{{end}}>KURANG DARI RP. 500.000</option>
+                        <option value="RP. 500.000 - RP. 1.000.000" {{if eq .Student.Field23FatherIncome "RP. 500.000 - RP. 1.000.000"}}selected{{end}}>RP. 500.000 - RP. 1.000.000</option>
+                        <option value="RP. 1.000.000 - RP. 2.000.000" {{if eq .Student.Field23FatherIncome "RP. 1.000.000 - RP. 2.000.000"}}selected{{end}}>RP. 1.000.000 - RP. 2.000.000</option>
+                        <option value="RP. 2.000.000 - RP. 3.000.000" {{if eq .Student.Field23FatherIncome "RP. 2.000.000 - RP. 3.000.000"}}selected{{end}}>RP. 2.000.000 - RP. 3.000.000</option>
+                        <option value="RP. 3.000.000 - RP. 5.000.000" {{if eq .Student.Field23FatherIncome "RP. 3.000.000 - RP. 5.000.000"}}selected{{end}}>RP. 3.000.000 - RP. 5.000.000</option>
+                        <option value="LEBIH DARI RP. 5.000.000" {{if eq .Student.Field23FatherIncome "LEBIH DARI RP. 5.000.000"}}selected{{end}}>LEBIH DARI RP. 5.000.000</option>
+                        <option value="TIDAK ADA" {{if eq .Student.Field23FatherIncome "TIDAK ADA"}}selected{{end}}>TIDAK ADA</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- BAGIAN 3: TEMPAT TINGGAL & ALAMAT         -->
+        <!-- ========================================== -->
+        <div>
+            <div class="border-b border-slate-200 pb-2.5 mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">3</span>
+                    Tempat Tinggal & Alamat Domisili
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">24. Jenis Tempat Tinggal Siswa *</label>
+                    <select name="f24_residence_type" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Jenis Tempat Tinggal --</option>
+                        <option value="TINGGAL DENGAN ORANG TUA/WALI" {{if or (eq .Student.Field24ResidenceType "TINGGAL DENGAN ORANG TUA/WALI") (not .Student.Field24ResidenceType)}}selected{{end}}>TINGGAL DENGAN ORANG TUA/WALI</option>
+                        <option value="TINGGAL DENGAN SAUDARA/KERABAT" {{if eq .Student.Field24ResidenceType "TINGGAL DENGAN SAUDARA/KERABAT"}}selected{{end}}>TINGGAL DENGAN SAUDARA/KERABAT</option>
+                        <option value="TINGGAL DI ASRAMA" {{if eq .Student.Field24ResidenceType "TINGGAL DI ASRAMA"}}selected{{end}}>TINGGAL DI ASRAMA</option>
+                        <option value="TINGGAL DI PESANTREN" {{if eq .Student.Field24ResidenceType "TINGGAL DI PESANTREN"}}selected{{end}}>TINGGAL DI PESANTREN</option>
+                        <option value="TINGGAL DI PANTI ASUHAN" {{if eq .Student.Field24ResidenceType "TINGGAL DI PANTI ASUHAN"}}selected{{end}}>TINGGAL DI PANTI ASUHAN</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">25. Status Kepemilikan Rumah *</label>
+                    <select name="f25_house_ownership" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Kepemilikan Rumah --</option>
+                        <option value="MILIK SENDIRI" {{if or (eq .Student.Field25HouseOwnership "MILIK SENDIRI") (not .Student.Field25HouseOwnership)}}selected{{end}}>MILIK SENDIRI</option>
+                        <option value="SEWA/KONTRAK" {{if eq .Student.Field25HouseOwnership "SEWA/KONTRAK"}}selected{{end}}>SEWA/KONTRAK</option>
+                        <option value="RUMAH ORANG TUA" {{if eq .Student.Field25HouseOwnership "RUMAH ORANG TUA"}}selected{{end}}>RUMAH ORANG TUA</option>
+                        <option value="RUMAH SAUDARA/KERABAT" {{if eq .Student.Field25HouseOwnership "RUMAH SAUDARA/KERABAT"}}selected{{end}}>RUMAH SAUDARA/KERABAT</option>
+                        <option value="RUMAH DINAS" {{if eq .Student.Field25HouseOwnership "RUMAH DINAS"}}selected{{end}}>RUMAH DINAS</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">26. Provinsi *</label>
+                    <input type="text" name="f26_province" value="{{if .Student.Field26Province}}{{.Student.Field26Province}}{{else}}Jawa Barat{{end}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">27. Kabupaten / Kota *</label>
+                    <input type="text" name="f27_city" value="{{.Student.Field27City}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">28. Kecamatan *</label>
+                    <input type="text" name="f28_district" value="{{.Student.Field28District}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">29. Desa / Kelurahan *</label>
+                    <input type="text" name="f29_village" value="{{.Student.Field29Village}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">30. Alamat Tinggal Saat Ini (Jalan / RT / RW) *</label>
+                    <input type="text" name="f30_street_address" value="{{.Student.Field30StreetAddress}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">31. Kode Pos *</label>
+                    <input type="text" name="f31_postal_code" value="{{.Student.Field31PostalCode}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- BAGIAN 4: DATA IBU KANDUNG                 -->
+        <!-- ========================================== -->
+        <div>
+            <div class="border-b border-slate-200 pb-2.5 mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">4</span>
+                    Data Ibu Kandung
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">32. Nama Ibu Kandung *</label>
+                    <input type="text" name="f32_mother_name" value="{{.Student.Field32MotherName}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">33. Status Ibu Kandung *</label>
+                    <select name="f33_mother_status" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Status Ibu --</option>
+                        <option value="MASIH HIDUP" {{if or (eq .Student.Field33MotherStatus "MASIH HIDUP") (not .Student.Field33MotherStatus)}}selected{{end}}>MASIH HIDUP</option>
+                        <option value="SUDAH MENINGGAL" {{if eq .Student.Field33MotherStatus "SUDAH MENINGGAL"}}selected{{end}}>SUDAH MENINGGAL</option>
+                        <option value="TIDAK DIKETAHUI" {{if eq .Student.Field33MotherStatus "TIDAK DIKETAHUI"}}selected{{end}}>TIDAK DIKETAHUI</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">34. NIK Ibu *</label>
+                    <input type="text" name="f34_mother_nik" value="{{.Student.Field34MotherNIK}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Sesuai KK</p>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">35. Tempat Lahir Ibu *</label>
+                    <input type="text" name="f35_mother_birth_pl" value="{{.Student.Field35MotherBirthPl}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">36. Tanggal / Tahun Lahir Ibu *</label>
+                    <input type="date" name="f36_mother_birth_yr" value="{{.Student.Field36MotherBirthYr}}" class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">37. Pendidikan Ibu *</label>
+                    <select name="f37_mother_edu" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Pendidikan Ibu --</option>
+                        <option value="TIDAK BERPENDIDIKAN" {{if eq .Student.Field37MotherEdu "TIDAK BERPENDIDIKAN"}}selected{{end}}>TIDAK BERPENDIDIKAN</option>
+                        <option value="SD/SEDERAJAT" {{if eq .Student.Field37MotherEdu "SD/SEDERAJAT"}}selected{{end}}>SD/SEDERAJAT</option>
+                        <option value="SMP/SEDERAJAT" {{if eq .Student.Field37MotherEdu "SMP/SEDERAJAT"}}selected{{end}}>SMP/SEDERAJAT</option>
+                        <option value="SMA/SEDERAJAT" {{if eq .Student.Field37MotherEdu "SMA/SEDERAJAT"}}selected{{end}}>SMA/SEDERAJAT</option>
+                        <option value="D1" {{if eq .Student.Field37MotherEdu "D1"}}selected{{end}}>D1</option>
+                        <option value="D2" {{if eq .Student.Field37MotherEdu "D2"}}selected{{end}}>D2</option>
+                        <option value="D3" {{if eq .Student.Field37MotherEdu "D3"}}selected{{end}}>D3</option>
+                        <option value="D4/S1" {{if eq .Student.Field37MotherEdu "D4/S1"}}selected{{end}}>D4/S1</option>
+                        <option value="S2" {{if eq .Student.Field37MotherEdu "S2"}}selected{{end}}>S2</option>
+                        <option value="S3" {{if eq .Student.Field37MotherEdu "S3"}}selected{{end}}>S3</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">38. Pekerjaan Ibu *</label>
+                    <select name="f38_mother_job" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Pekerjaan Ibu --</option>
+                        <option value="TIDAK BEKERJA" {{if eq .Student.Field38MotherJob "TIDAK BEKERJA"}}selected{{end}}>TIDAK BEKERJA</option>
+                        <option value="PENSIUNAN" {{if eq .Student.Field38MotherJob "PENSIUNAN"}}selected{{end}}>PENSIUNAN</option>
+                        <option value="PNS DI INSTANSI PEMERINTAH" {{if eq .Student.Field38MotherJob "PNS DI INSTANSI PEMERINTAH"}}selected{{end}}>PNS DI INSTANSI PEMERINTAH</option>
+                        <option value="TNI/POLISI" {{if eq .Student.Field38MotherJob "TNI/POLISI"}}selected{{end}}>TNI/POLISI</option>
+                        <option value="GURU/DOSEN" {{if eq .Student.Field38MotherJob "GURU/DOSEN"}}selected{{end}}>GURU/DOSEN</option>
+                        <option value="PEGAWAI SWASTA" {{if eq .Student.Field38MotherJob "PEGAWAI SWASTA"}}selected{{end}}>PEGAWAI SWASTA</option>
+                        <option value="WIRASWASTA/WIRAUSAHA" {{if eq .Student.Field38MotherJob "WIRASWASTA/WIRAUSAHA"}}selected{{end}}>WIRASWASTA/WIRAUSAHA</option>
+                        <option value="PENGACARA/HAKIM/JAKSA/NOTARIS" {{if eq .Student.Field38MotherJob "PENGACARA/HAKIM/JAKSA/NOTARIS"}}selected{{end}}>PENGACARA/HAKIM/JAKSA/NOTARIS</option>
+                        <option value="SENIMAN/ARTIS/PELUKIS/SEJENIS" {{if eq .Student.Field38MotherJob "SENIMAN/ARTIS/PELUKIS/SEJENIS"}}selected{{end}}>SENIMAN/ARTIS/PELUKIS/SEJENIS</option>
+                        <option value="DOKTER/BIDAN/PERAWAT" {{if eq .Student.Field38MotherJob "DOKTER/BIDAN/PERAWAT"}}selected{{end}}>DOKTER/BIDAN/PERAWAT</option>
+                        <option value="PILOT/PRAMUGARI" {{if eq .Student.Field38MotherJob "PILOT/PRAMUGARI"}}selected{{end}}>PILOT/PRAMUGARI</option>
+                        <option value="PEDAGANG" {{if eq .Student.Field38MotherJob "PEDAGANG"}}selected{{end}}>PEDAGANG</option>
+                        <option value="PETANI/PETERNAK" {{if eq .Student.Field38MotherJob "PETANI/PETERNAK"}}selected{{end}}>PETANI/PETERNAK</option>
+                        <option value="NELAYAN" {{if eq .Student.Field38MotherJob "NELAYAN"}}selected{{end}}>NELAYAN</option>
+                        <option value="BURUH PABRIK/BANGUNAN" {{if eq .Student.Field38MotherJob "BURUH PABRIK/BANGUNAN"}}selected{{end}}>BURUH PABRIK/BANGUNAN</option>
+                        <option value="SOPIR/MASINIS/KONDEKTUR" {{if eq .Student.Field38MotherJob "SOPIR/MASINIS/KONDEKTUR"}}selected{{end}}>SOPIR/MASINIS/KONDEKTUR</option>
+                        <option value="POLITIKUS" {{if eq .Student.Field38MotherJob "POLITIKUS"}}selected{{end}}>POLITIKUS</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">39. Penghasilan Ibu Per Bulan *</label>
+                    <select name="f39_mother_income" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih Penghasilan Ibu --</option>
+                        <option value="KURANG DARI RP. 500.000" {{if eq .Student.Field39MotherIncome "KURANG DARI RP. 500.000"}}selected{{end}}>KURANG DARI RP. 500.000</option>
+                        <option value="RP. 500.000 - RP. 1.000.000" {{if eq .Student.Field39MotherIncome "RP. 500.000 - RP. 1.000.000"}}selected{{end}}>RP. 500.000 - RP. 1.000.000</option>
+                        <option value="RP. 1.000.000 - RP. 2.000.000" {{if eq .Student.Field39MotherIncome "RP. 1.000.000 - RP. 2.000.000"}}selected{{end}}>RP. 1.000.000 - RP. 2.000.000</option>
+                        <option value="RP. 2.000.000 - RP. 3.000.000" {{if eq .Student.Field39MotherIncome "RP. 2.000.000 - RP. 3.000.000"}}selected{{end}}>RP. 2.000.000 - RP. 3.000.000</option>
+                        <option value="RP. 3.000.000 - RP. 5.000.000" {{if eq .Student.Field39MotherIncome "RP. 3.000.000 - RP. 5.000.000"}}selected{{end}}>RP. 3.000.000 - RP. 5.000.000</option>
+                        <option value="LEBIH DARI RP. 5.000.000" {{if eq .Student.Field39MotherIncome "LEBIH DARI RP. 5.000.000"}}selected{{end}}>LEBIH DARI RP. 5.000.000</option>
+                        <option value="TIDAK ADA" {{if eq .Student.Field39MotherIncome "TIDAK ADA"}}selected{{end}}>TIDAK ADA</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- BAGIAN 5: PENDIDIKAN SEBELUMNYA & IMUNISASI -->
+        <!-- ========================================== -->
+        <div>
+            <div class="border-b border-slate-200 pb-2.5 mb-4 flex items-center justify-between">
+                <h3 class="font-bold text-xs sm:text-sm text-slate-800 flex items-center gap-2">
+                    <span class="w-5 h-5 rounded-full bg-emerald-600 text-white flex items-center justify-center text-[10px]">5</span>
+                    Riwayat PAUD, TK, Imunisasi &amp; Kartu Bantuan
+                </h3>
+            </div>
+
+            <!-- PAUD & TK -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 mb-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">40. Pernah Sekolah PAUD? *</label>
+                    <select name="f40_attended_paud" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih --</option>
+                        <option value="IYA" {{if eq .Student.Field40AttendedPAUD "IYA"}}selected{{end}}>IYA</option>
+                        <option value="TIDAK" {{if eq .Student.Field40AttendedPAUD "TIDAK"}}selected{{end}}>TIDAK</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">41. Pernah Sekolah TK/RA di Tempat Lain? *</label>
+                    <select name="f41_attended_tkra" class="w-full text-xs px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium text-slate-800">
+                        <option value="">-- Pilih --</option>
+                        <option value="IYA" {{if eq .Student.Field41AttendedTKRA "IYA"}}selected{{end}}>IYA</option>
+                        <option value="TIDAK" {{if eq .Student.Field41AttendedTKRA "TIDAK"}}selected{{end}}>TIDAK</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- IMUNISASI -->
+            <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 mb-4">
+                <span class="text-[11px] font-bold text-slate-700 block mb-2">Riwayat Imunisasi Dasar Lengkap:</span>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-1">42. Hepatitis</label>
+                        <select name="f42_immune_hepatitis" class="w-full text-xs px-2.5 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                            <option value="">-- Pilih --</option>
+                            <option value="IYA" {{if eq .Student.Field42ImmuneHepatitis "IYA"}}selected{{end}}>IYA</option>
+                            <option value="TIDAK" {{if eq .Student.Field42ImmuneHepatitis "TIDAK"}}selected{{end}}>TIDAK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-1">43. Polio</label>
+                        <select name="f43_immune_polio" class="w-full text-xs px-2.5 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                            <option value="">-- Pilih --</option>
+                            <option value="IYA" {{if eq .Student.Field43ImmunePolio "IYA"}}selected{{end}}>IYA</option>
+                            <option value="TIDAK" {{if eq .Student.Field43ImmunePolio "TIDAK"}}selected{{end}}>TIDAK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-1">44. BCG</label>
+                        <select name="f44_immune_bcg" class="w-full text-xs px-2.5 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                            <option value="">-- Pilih --</option>
+                            <option value="IYA" {{if eq .Student.Field44ImmuneBCG "IYA"}}selected{{end}}>IYA</option>
+                            <option value="TIDAK" {{if eq .Student.Field44ImmuneBCG "TIDAK"}}selected{{end}}>TIDAK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-1">45. Campak</label>
+                        <select name="f45_immune_campak" class="w-full text-xs px-2.5 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                            <option value="">-- Pilih --</option>
+                            <option value="IYA" {{if eq .Student.Field45ImmuneCampak "IYA"}}selected{{end}}>IYA</option>
+                            <option value="TIDAK" {{if eq .Student.Field45ImmuneCampak "TIDAK"}}selected{{end}}>TIDAK</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-600 mb-1">46. DPT</label>
+                        <select name="f46_immune_dpt" class="w-full text-xs px-2.5 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-medium">
+                            <option value="">-- Pilih --</option>
+                            <option value="IYA" {{if eq .Student.Field46ImmuneDPT "IYA"}}selected{{end}}>IYA</option>
+                            <option value="TIDAK" {{if eq .Student.Field46ImmuneDPT "TIDAK"}}selected{{end}}>TIDAK</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KARTU BANTUAN -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-4">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">47. No. Kartu Keluarga Sejahtera (KKS) *</label>
+                    <input type="text" name="f47_no_kks" value="{{if .Student.Field47NoKKS}}{{.Student.Field47NoKKS}}{{else}}0{{end}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Isi angka 0 jika tidak memiliki</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">48. No. Program Keluarga Harapan (PKH) *</label>
+                    <input type="text" name="f48_no_pkh" value="{{if .Student.Field48NoPKH}}{{.Student.Field48NoPKH}}{{else}}0{{end}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Isi angka 0 jika tidak memiliki</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 mb-1">49. No. Kartu Indonesia Pintar (KIP) *</label>
+                    <input type="text" name="f49_no_kip" value="{{if .Student.Field49NoKIP}}{{.Student.Field49NoKIP}}{{else}}0{{end}}" required class="w-full text-xs px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-mono">
+                    <p class="text-[10px] text-slate-400 mt-0.5">Isi angka 0 jika tidak memiliki</p>
+                </div>
+            </div>
+
+            <!-- POINT 50: PERNYATAAN KEBENARAN DATA -->
+            <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-3">
+                <input type="checkbox" name="f50_is_confirmed" id="f50_is_confirmed" {{if .Student.Field50IsConfirmed}}checked{{end}}
+                    class="mt-1 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500">
+                <label for="f50_is_confirmed" class="text-[11px] sm:text-xs text-slate-700 leading-relaxed cursor-pointer select-none">
+                    <span class="font-extrabold text-slate-900 block">50. APAKAH DATA SUDAH BENAR DAN SESUAI? *</span>
+                    Saya menyatakan dengan sesungguhnya bahwa seluruh data formulir ini adalah benar, sah, dan dapat dipertanggungjawabkan.
+                </label>
+            </div>
+        </div>
+
+        <div class="pt-4 flex items-center justify-end border-t border-slate-200">
+            {{if .CanEditProfile}}
+            <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i> {{if eq .CurrentUser.Role "student"}}Simpan &amp; Kirim Formulir{{else}}Simpan Perubahan{{end}}
+            </button>
+            {{else}}
+            <button type="button" disabled title="Formulir sedang menunggu verifikasi" class="w-full sm:w-auto px-6 py-3 bg-slate-300 text-slate-600 font-bold text-xs sm:text-sm rounded-xl cursor-not-allowed flex items-center justify-center gap-2">
+                <i class="fa-solid fa-lock"></i> Formulir Terkunci
+            </button>
+            {{end}}
+        </div>
+    </form>
+
+</div>
+<style>
+    #studentProfileForm .field-invalid { border-color: #dc2626 !important; box-shadow: 0 0 0 2px rgb(254 202 202) !important; background-color: #fef2f2 !important; }
+    #studentProfileForm .label-invalid { color: #b91c1c !important; }
+    #studentProfileForm .field-error { display: block; color: #b91c1c; font-size: 10px; font-weight: 700; margin-top: 4px; }
+</style>
+<script>
+(() => {
+    const form = document.getElementById('studentProfileForm');
+    if (!form) return;
+
+    const requiredFields = [];
+    form.querySelectorAll('label').forEach((label) => {
+        if (!label.textContent.includes('*')) return;
+        const control = label.htmlFor
+            ? document.getElementById(label.htmlFor)
+            : label.parentElement.querySelector('input:not([type="checkbox"]), select, textarea');
+        if (!control || !form.contains(control)) return;
+        control.required = true;
+        requiredFields.push({ control, label });
+    });
+
+    function fieldMessage(control) {
+        const value = control.type === 'checkbox' ? control.checked : control.value.trim();
+        if (!value) return control.type === 'checkbox' ? 'Centang pernyataan ini sebelum mengirim.' : 'Data ini wajib diisi atau dipilih.';
+        if (control.name === 'f05_nik' || control.name === 'f14_no_kk' || control.name === 'f18_father_nik' || control.name === 'f34_mother_nik') {
+            if (!/^\d{16}$/.test(control.value.trim())) return 'Harus terdiri dari 16 angka.';
+        }
+        if (control.name === 'f13_phone_wa' && !/^\d{10,15}$/.test(control.value.trim())) return 'Masukkan 10–15 angka tanpa spasi atau tanda baca.';
+        if (control.name === 'f31_postal_code' && !/^\d{5}$/.test(control.value.trim())) return 'Kode pos harus terdiri dari 5 angka.';
+        if (control.name === 'f08_child_order' && Number(control.value) < 1) return 'Isi dengan angka minimal 1.';
+        if (control.name === 'f09_siblings_count' && Number(control.value) < 0) return 'Jumlah saudara tidak boleh negatif.';
+        return '';
+    }
+
+    function validateField(field) {
+        const { control, label } = field;
+        const message = fieldMessage(control);
+        const wrapper = control.parentElement;
+        let error = wrapper.querySelector(':scope > .field-error');
+        control.classList.toggle('field-invalid', Boolean(message));
+        label.classList.toggle('label-invalid', Boolean(message));
+        control.setAttribute('aria-invalid', message ? 'true' : 'false');
+        if (message && !error) {
+            error = document.createElement('span');
+            error.className = 'field-error';
+            control.insertAdjacentElement('afterend', error);
+        }
+        if (error) {
+            error.textContent = message;
+            error.hidden = !message;
+        }
+        return Boolean(message);
+    }
+
+    function validateAll() {
+        return requiredFields.filter(validateField);
+    }
+
+    requiredFields.forEach((field) => {
+        field.control.addEventListener(field.control.tagName === 'SELECT' || field.control.type === 'checkbox' ? 'change' : 'input', () => validateField(field));
+        if (field.control.tagName === 'SELECT' || field.control.type === 'checkbox') field.control.addEventListener('input', () => validateField(field));
+    });
+
+    form.addEventListener('submit', (event) => {
+        const invalidFields = validateAll();
+        if (invalidFields.length) {
+            event.preventDefault();
+            const count = invalidFields.length;
+            const first = invalidFields[0].control;
+            first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            first.focus({ preventScroll: true });
+            const summary = document.createElement('div');
+            summary.className = 'mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800';
+            summary.setAttribute('role', 'alert');
+            summary.textContent = `Ada ${count} data yang perlu diperbaiki. Kolom wajib ditandai merah; periksa pesan di bawah kolom tersebut.`;
+            form.querySelector('[data-validation-summary]')?.remove();
+            summary.dataset.validationSummary = 'true';
+            form.prepend(summary);
+        }
+    });
+
+    if (form.dataset.serverError === 'true' && form.dataset.canEdit === 'true') {
+        const invalidFields = validateAll();
+        if (invalidFields.length) invalidFields[0].control.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+})();
+</script>
+{{end}}

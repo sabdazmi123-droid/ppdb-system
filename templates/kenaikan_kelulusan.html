@@ -1,0 +1,464 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-emerald-600"></i> Kenaikan Kelas & Kelulusan Siswa
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Kelola status akademik: <b>Naikkan Kelas</b>, <b>Mengulang</b>, <b>Pindah Madrasah</b>, atau <b>Kelulusan</b>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Alert Success / Error -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+    {{if .ErrorMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-red-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                </div>
+                <input type="text" id="searchInput_naik" placeholder="Cari nama, NIS, NIK..."
+                    class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 focus:bg-white outline-none transition font-medium placeholder-slate-400">
+            </div>
+            <!-- Kelas Filter -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-chalkboard-user text-slate-400 text-xs"></i>
+                </div>
+                <select id="filterKelas_naik"
+                    class="pl-8 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition font-semibold text-slate-700 appearance-none cursor-pointer w-full sm:w-auto">
+                    <option value="">Semua Kelas</option>
+                    <option value="Kelas A">Kelas A</option>
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+            </div>
+        </div>
+        <!-- Results Counter -->
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-slate-400 text-xs"></i>
+            <span id="counterText_naik" class="text-xs text-slate-500 font-semibold">Menampilkan 0 dari 0 data</span>
+        </div>
+    </div>
+
+    <!-- Container Siswa Aktif yang Dapat Diproses -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-sm text-slate-800">Daftar Siswa untuk Proses Akademik</h3>
+            <span class="text-xs text-slate-500 font-semibold">{{len .ActiveStudents}} Siswa Tersedia</span>
+        </div>
+
+        <!-- TAMPILAN KHUSUS HP (MOBILE CARD VIEW) -->
+        <div class="block lg:hidden space-y-3">
+            {{range $index, $st := .ActiveStudents}}
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5"
+                data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-kelas="{{$st.CurrentClass}}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-900 truncate">{{$st.Field01FullName}}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">NIS: {{$st.NISLokal}} &bull; NIK: {{$st.Field05NIK}}</div>
+                    </div>
+                    <span class="px-2 py-0.5 bg-purple-100 text-purple-700 font-bold rounded-lg text-[10px] flex-shrink-0">
+                        {{$st.CurrentClass}}
+                    </span>
+                </div>
+
+                <!-- 4 Aksi di HP (Grid 2x2) -->
+                <div class="grid grid-cols-2 gap-1.5 pt-1">
+                    <!-- 1. Naikkan Kelas -->
+                    <button onclick="openNaikKelasModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', '{{$st.CurrentClass}}')"
+                        class="py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> Naik Kelas
+                    </button>
+
+                    <!-- 2. Mengulang Kelas -->
+                    <button onclick="openUlangKelasModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', '{{$st.CurrentClass}}')"
+                        class="py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> Mengulang
+                    </button>
+
+                    <!-- 3. Pindah Madrasah -->
+                    <button onclick="openPindahModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                        class="py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Pindah
+                    </button>
+
+                    <!-- 4. Siswa Lulus -->
+                    <button onclick="openLulusModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                        class="py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-graduation-cap"></i> Lulus
+                    </button>
+                </div>
+            </div>
+            {{else}}
+            <div class="text-center py-8 text-slate-400 text-xs">Tidak ada siswa aktif saat ini.</div>
+            {{end}}
+        </div>
+
+        <!-- TAMPILAN TABEL DESKTOP -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                        <th class="py-3 px-3">No</th>
+                        <th class="py-3 px-3">Nama Lengkap Siswa</th>
+                        <th class="py-3 px-3">NIS Lokal</th>
+                        <th class="py-3 px-3">Kelas Saat Ini</th>
+                        <th class="py-3 px-3">Status</th>
+                        <th class="py-3 px-3 text-center">4 Aksi Proses Akademik</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {{range $index, $st := .ActiveStudents}}
+                    <tr class="hover:bg-slate-50/80 transition"
+                        data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-kelas="{{$st.CurrentClass}}">
+                        <td class="py-3 px-3 text-slate-400 font-semibold">{{add1 $index}}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800">{{$st.Field01FullName}}</div>
+                            <div class="text-[11px] text-slate-400">NIK: {{$st.Field05NIK}}</div>
+                        </td>
+                        <td class="py-3 px-3 font-mono font-bold text-emerald-800">{{$st.NISLokal}}</td>
+                        <td class="py-3 px-3">
+                            <span class="px-2.5 py-1 bg-purple-50 text-purple-700 font-bold rounded-lg text-xs">
+                                {{$st.CurrentClass}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-circle-dot"></i> {{$st.StatusKeaktifan}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <!-- Aksi Vertikal Simbol Saja Sesuai Permintaan -->
+                            <div class="flex flex-col items-center justify-center gap-1.5 py-1">
+                                <button type="button" onclick="openNaikKelasModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', '{{$st.CurrentClass}}')"
+                                    class="w-7 h-7 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center" title="Naikkan Tingkat / Kelas">
+                                    <i class="fa-solid fa-arrow-trend-up"></i>
+                                </button>
+                                <button type="button" onclick="openUlangKelasModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', '{{$st.CurrentClass}}')"
+                                    class="w-7 h-7 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center" title="Mengulang Kelas">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                </button>
+                                <button type="button" onclick="openPindahModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                                    class="w-7 h-7 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center" title="Pindah Madrasah (Keluar)">
+                                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                </button>
+                                <button type="button" onclick="openLulusModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                                    class="w-7 h-7 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center justify-center" title="Luluskan Siswa">
+                                    <i class="fa-solid fa-graduation-cap"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="6" class="text-center py-10 text-slate-400">Tidak ada siswa aktif saat ini.</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- 1. MODAL NAIKKAN KELAS -->
+<div id="naikKelasModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-emerald-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-arrow-trend-up"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Naikkan Tingkat / Kelas</h3>
+                <p class="text-xs text-slate-500">Pilih kelas tujuan kenaikan</p>
+            </div>
+        </div>
+
+        <form action="/kenaikan-kelulusan/proses" method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="naik_kelas">
+            <input type="hidden" name="nik" id="naikNik">
+            
+            <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+                <div>Nama Siswa: <span id="naikName" class="font-bold text-slate-800"></span></div>
+                <div>Kelas Saat Ini: <span id="naikCurrentClass" class="font-bold text-purple-700"></span></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Kelas Tujuan Kenaikan *</label>
+                <select name="target_class" required class="w-full text-xs px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-emerald-500 font-bold">
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+                <p class="text-[11px] text-slate-400 mt-1">Data siswa akan otomatis masuk ke Data Siswa Aktif kelas terpilih.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Pelajaran Baru</label>
+                <input type="text" name="academic_year" value="{{.School.CurrentYear}}" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('naikKelasModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md">Simpan Kenaikan Kelas</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 2. MODAL MENGULANG KELAS -->
+<div id="ulangKelasModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-amber-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-rotate-left"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Mengulang Kelas</h3>
+                <p class="text-xs text-slate-500">Pilih kelas mengulang (A / B1 / B2)</p>
+            </div>
+        </div>
+
+        <form action="/kenaikan-kelulusan/proses" method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="ulang_kelas">
+            <input type="hidden" name="nik" id="ulangNik">
+            
+            <div class="p-3 bg-amber-50 rounded-xl text-xs space-y-1 text-amber-900">
+                <div>Nama Siswa: <span id="ulangName" class="font-bold"></span></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilihan Kelas Mengulang *</label>
+                <select name="target_class" required class="w-full text-xs px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-amber-500 font-bold">
+                    <option value="Kelas A">Kelas A</option>
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+                <p class="text-[11px] text-slate-400 mt-1">Data siswa akan tetap berada di Data Siswa Aktif kelas tersebut.</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('ulangKelasModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-md">Simpan Mengulang Kelas</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 3. MODAL PINDAH MADRASAH -->
+<div id="pindahModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-orange-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Mutasi / Pindah Madrasah</h3>
+                <p class="text-xs text-slate-500">Data akan dipindahkan ke menu Data Siswa Keluar</p>
+            </div>
+        </div>
+
+        <form action="/kenaikan-kelulusan/proses" method="POST" class="space-y-4">
+            <input type="hidden" name="action" value="pindah_madrasah">
+            <input type="hidden" name="nik" id="pindahNik">
+            
+            <div class="p-3 bg-orange-50 rounded-xl text-xs text-orange-950">
+                Nama Siswa: <span id="pindahName" class="font-bold"></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Sekolah / Madrasah Tujuan *</label>
+                <input type="text" name="school_target" required placeholder="Contoh: RA Al-Falah / MI Nurul Fikri"
+                    class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-orange-500 font-semibold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Alasan Pindah</label>
+                <textarea name="reason" rows="2" placeholder="Contoh: Mengikuti domisili orang tua pindah kerja ke luar kota."
+                    class="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-orange-500 outline-none"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Keluar</label>
+                <input type="date" name="out_date" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl">
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('pindahModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-xl text-xs font-bold shadow-md">Proses Pindah Sekolah</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 4. MODAL SISWA LULUS -->
+<div id="lulusModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-teal-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Penetapan Siswa Lulus</h3>
+                <p class="text-xs text-slate-500">Input nomor seri ijazah dan upload hasil scan ijazah</p>
+            </div>
+        </div>
+
+        <form action="/kenaikan-kelulusan/proses" method="POST" enctype="multipart/form-data" class="space-y-4">
+            <input type="hidden" name="action" value="lulus">
+            <input type="hidden" name="nik" id="lulusNik">
+            
+            <div class="p-3 bg-teal-50 rounded-xl text-xs text-teal-950">
+                Nama Siswa: <span id="lulusName" class="font-bold"></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Seri Ijazah *</label>
+                <input type="text" name="cert_number" required placeholder="Contoh: DN-02/RA/26/0001234"
+                    class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-teal-500 font-mono font-bold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Kelulusan *</label>
+                <input type="text" name="grad_year" value="{{.School.CurrentYear}}" required
+                    class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Upload Hasil Scan Ijazah (PDF/JPG/PNG)</label>
+                <input type="file" name="scan_file" accept=".pdf,image/*"
+                    class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                <p class="text-[11px] text-slate-400 mt-1">Data akan otomatis masuk ke menu Data Siswa Lulus.</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeModal('lulusModal')" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md">Tetapkan Kelulusan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const searchInput = document.getElementById('searchInput_naik');
+        const filterKelas = document.getElementById('filterKelas_naik');
+        const counterText = document.getElementById('counterText_naik');
+
+        const tbody = document.querySelector('.hidden.lg\\:block tbody');
+        const mobileContainer = document.querySelector('.block.lg\\:hidden');
+
+        const emptyRow = document.createElement('tr');
+        emptyRow.id = 'emptyRow_naik';
+        emptyRow.innerHTML = '<td colspan="6" class="text-center py-10 text-slate-400 text-xs"><i class="fa-solid fa-magnifying-glass mr-1.5"></i>Tidak ada data yang sesuai pencarian.</td>';
+        emptyRow.classList.add('hidden');
+        if (tbody) tbody.appendChild(emptyRow);
+
+        const emptyCard = document.createElement('div');
+        emptyCard.id = 'emptyCard_naik';
+        emptyCard.className = 'hidden text-center py-8 text-slate-400 text-xs';
+        emptyCard.innerHTML = '<i class="fa-solid fa-magnifying-glass mr-1.5"></i>Tidak ada data yang sesuai pencarian.';
+        if (mobileContainer) mobileContainer.appendChild(emptyCard);
+
+        function filterNaik() {
+            const query = searchInput.value.toLowerCase().trim();
+            const kelas = filterKelas.value;
+
+            let desktopTotal = 0, desktopVisible = 0;
+            if (tbody) {
+                const rows = tbody.querySelectorAll('tr:not(#emptyRow_naik)');
+                desktopTotal = rows.length;
+                rows.forEach(function(row) {
+                    const name = (row.dataset.name || '').toLowerCase();
+                    const nik = (row.dataset.nik || '').toLowerCase();
+                    const rowKelas = row.dataset.kelas || '';
+                    const matchQuery = !query || name.includes(query) || nik.includes(query);
+                    const matchKelas = !kelas || rowKelas === kelas;
+                    const show = matchQuery && matchKelas;
+                    row.classList.toggle('hidden', !show);
+                    if (show) desktopVisible++;
+                });
+                if (desktopVisible === 0 && desktopTotal > 0) {
+                    emptyRow.classList.remove('hidden');
+                } else {
+                    emptyRow.classList.add('hidden');
+                }
+            }
+
+            let mobileTotal = 0, mobileVisible = 0;
+            if (mobileContainer) {
+                const cards = mobileContainer.querySelectorAll('[data-name]');
+                mobileTotal = cards.length;
+                cards.forEach(function(card) {
+                    const name = (card.dataset.name || '').toLowerCase();
+                    const nik = (card.dataset.nik || '').toLowerCase();
+                    const cardKelas = card.dataset.kelas || '';
+                    const matchQuery = !query || name.includes(query) || nik.includes(query);
+                    const matchKelas = !kelas || cardKelas === kelas;
+                    const show = matchQuery && matchKelas;
+                    card.classList.toggle('hidden', !show);
+                    if (show) mobileVisible++;
+                });
+                if (mobileVisible === 0 && mobileTotal > 0) {
+                    emptyCard.classList.remove('hidden');
+                } else {
+                    emptyCard.classList.add('hidden');
+                }
+            }
+
+            const total = desktopTotal || mobileTotal;
+            const visible = desktopTotal ? desktopVisible : mobileVisible;
+            counterText.textContent = 'Menampilkan ' + visible + ' dari ' + total + ' data';
+        }
+
+        if (searchInput) searchInput.addEventListener('input', filterNaik);
+        if (filterKelas) filterKelas.addEventListener('change', filterNaik);
+        filterNaik();
+    })();
+</script>
+
+<script>
+    function openNaikKelasModal(nik, name, currClass) {
+        document.getElementById('naikNik').value = nik;
+        document.getElementById('naikName').innerText = name;
+        document.getElementById('naikCurrentClass').innerText = currClass;
+        document.getElementById('naikKelasModal').classList.remove('hidden');
+    }
+    function openUlangKelasModal(nik, name, currClass) {
+        document.getElementById('ulangNik').value = nik;
+        document.getElementById('ulangName').innerText = name;
+        document.getElementById('ulangKelasModal').classList.remove('hidden');
+    }
+    function openPindahModal(nik, name) {
+        document.getElementById('pindahNik').value = nik;
+        document.getElementById('pindahName').innerText = name;
+        document.getElementById('pindahModal').classList.remove('hidden');
+    }
+    function openLulusModal(nik, name) {
+        document.getElementById('lulusNik').value = nik;
+        document.getElementById('lulusName').innerText = name;
+        document.getElementById('lulusModal').classList.remove('hidden');
+    }
+    function closeModal(id) {
+        document.getElementById(id).classList.add('hidden');
+    }
+</script>
+{{end}}

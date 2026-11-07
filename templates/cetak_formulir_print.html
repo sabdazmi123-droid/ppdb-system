@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulir Pendaftaran Siswa Baru - {{.Student.Field01FullName}}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Times New Roman', Times, serif; }
+        .font-mono { font-family: Arial, Helvetica, sans-serif !important; font-variant-numeric: tabular-nums; }
+        {{if eq .Settings.DocumentStyle "minimal"}}
+        .print-paper { border-color: #94a3b8 !important; }
+        .document-accent { color: #1f2937 !important; border-color: #475569 !important; }
+        {{else}}
+        .document-accent { color: #065f46 !important; border-color: #065f46 !important; }
+        {{end}}
+        @media print {
+            .no-print { display: none !important; }
+            body { padding: 0 !important; background: white !important; }
+            .print-paper { box-shadow: none !important; border: none !important; width: 100% !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="p-2 sm:p-8 bg-slate-100 flex flex-col items-center">
+
+    <div class="no-print mb-4 flex gap-2 sm:gap-4 w-full max-w-xl justify-between px-2">
+        <button onclick="window.print()" class="px-4 sm:px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs rounded-xl shadow flex items-center gap-2">
+            <i class="fa-solid fa-print"></i> Cetak Dokumen PDF
+        </button>
+        <button onclick="window.close()" class="px-4 py-2 bg-white border border-slate-300 text-slate-700 font-bold text-xs rounded-xl">
+            Tutup
+        </button>
+    </div>
+
+    <div class="w-full overflow-x-auto flex justify-center">
+        <div class="print-paper w-[800px] min-w-[700px] sm:min-w-[800px] bg-white p-6 sm:p-10 shadow-lg border border-slate-300 text-slate-900 text-xs leading-relaxed">
+        <!-- Kop Surat Resmi -->
+        <div class="flex items-center gap-4 pb-4 border-b-4 border-double border-slate-900 text-center">
+            <div class="w-20 text-center">
+                <i class="fa-solid fa-mosque text-4xl text-emerald-800"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-bold text-sm uppercase">{{if .Settings.DocumentHeader}}{{.Settings.DocumentHeader}}{{else}}KEMENTERIAN AGAMA REPUBLIK INDONESIA{{end}}</h3>
+                <h2 class="font-black text-base uppercase">{{.School.SchoolName}}</h2>
+                <p class="text-[11px]">NPSN: {{.School.NPSN}} &bull; NSM: {{.School.NSM}} &bull; Akreditasi A</p>
+                <p class="text-[10px] italic">{{.School.Address}}, {{.School.City}}, {{.School.Province}} | Telp: {{.School.Phone}}</p>
+            </div>
+        </div>
+
+        <div class="text-center my-4">
+            <h1 class="document-accent font-bold text-sm uppercase underline">{{if .Settings.FormPDFTitle}}{{.Settings.FormPDFTitle}}{{else}}FORMULIR PENERIMAAN PESERTA DIDIK BARU (PPDB){{end}}</h1>
+            <p class="text-[11px] font-semibold">Tahun Pelajaran {{.School.CurrentYear}}</p>
+        </div>
+
+        <!-- Tabel 50 Pertanyaan -->
+        <table class="w-full border-collapse border border-slate-800 text-[11px]">
+            <tbody>
+                <tr class="bg-slate-100 font-bold"><td colspan="3" class="border border-slate-800 p-1.5">A. IDENTITAS CALON PESERTA DIDIK</td></tr>
+                <tr><td class="border border-slate-800 p-1 w-6 text-center">1</td><td class="border border-slate-800 p-1 w-64">Nama Lengkap Siswa</td><td class="border border-slate-800 p-1 font-bold">{{.Student.Field01FullName}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">2</td><td class="border border-slate-800 p-1">Tempat Lahir</td><td class="border border-slate-800 p-1">{{.Student.Field02BirthPlace}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">3</td><td class="border border-slate-800 p-1">Tanggal Lahir</td><td class="border border-slate-800 p-1">{{.Student.Field03BirthDate}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">4</td><td class="border border-slate-800 p-1">Kewarganegaraan</td><td class="border border-slate-800 p-1">{{.Student.Field04Nationality}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">5</td><td class="border border-slate-800 p-1 font-bold">NIK Siswa</td><td class="border border-slate-800 p-1 font-mono font-bold">{{.Student.Field05NIK}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">6</td><td class="border border-slate-800 p-1">Jenis Kelamin</td><td class="border border-slate-800 p-1">{{.Student.Field06Gender}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">7</td><td class="border border-slate-800 p-1">Agama</td><td class="border border-slate-800 p-1">{{.Student.Field07Religion}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">8</td><td class="border border-slate-800 p-1">Anak Ke- / Jumlah Saudara</td><td class="border border-slate-800 p-1">{{.Student.Field08ChildOrder}} dari {{.Student.Field09SiblingsCount}} bersaudara</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">10</td><td class="border border-slate-800 p-1">Jarak & Transportasi ke Sekolah</td><td class="border border-slate-800 p-1">{{.Student.Field10Distance}} / {{.Student.Field11Transport}} ({{.Student.Field12TravelTimeMin}} menit)</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">13</td><td class="border border-slate-800 p-1">Nomor HP / WhatsApp</td><td class="border border-slate-800 p-1 font-bold">{{.Student.Field13PhoneWA}}</td></tr>
+
+                <tr class="bg-slate-100 font-bold"><td colspan="3" class="border border-slate-800 p-1.5">B. DATA ORANG TUA / KELUARGA</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">14</td><td class="border border-slate-800 p-1">Nomor Kartu Keluarga (KK)</td><td class="border border-slate-800 p-1 font-mono">{{.Student.Field14NoKK}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">15</td><td class="border border-slate-800 p-1">Nama Kepala Keluarga</td><td class="border border-slate-800 p-1">{{.Student.Field15FamilyHead}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">16</td><td class="border border-slate-800 p-1">Nama Ayah Kandung (Status/NIK)</td><td class="border border-slate-800 p-1 font-bold">{{.Student.Field16FatherName}} ({{.Student.Field17FatherStatus}} / {{.Student.Field18FatherNIK}})</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">21</td><td class="border border-slate-800 p-1">Pendidikan & Pekerjaan Ayah</td><td class="border border-slate-800 p-1">{{.Student.Field21FatherEdu}} - {{.Student.Field22FatherJob}} ({{.Student.Field23FatherIncome}})</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">32</td><td class="border border-slate-800 p-1">Nama Ibu Kandung (Status/NIK)</td><td class="border border-slate-800 p-1 font-bold">{{.Student.Field32MotherName}} ({{.Student.Field33MotherStatus}} / {{.Student.Field34MotherNIK}})</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">37</td><td class="border border-slate-800 p-1">Pendidikan & Pekerjaan Ibu</td><td class="border border-slate-800 p-1">{{.Student.Field37MotherEdu}} - {{.Student.Field38MotherJob}} ({{.Student.Field39MotherIncome}})</td></tr>
+
+                <tr class="bg-slate-100 font-bold"><td colspan="3" class="border border-slate-800 p-1.5">C. TEMPAT TINGGAL & ALAMAT</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">24</td><td class="border border-slate-800 p-1">Tempat Tinggal / Kepemilikan</td><td class="border border-slate-800 p-1">{{.Student.Field24ResidenceType}} / {{.Student.Field25HouseOwnership}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">26</td><td class="border border-slate-800 p-1">Alamat Lengkap</td><td class="border border-slate-800 p-1">{{.Student.Field30StreetAddress}}, {{.Student.Field29Village}}, {{.Student.Field28District}}, {{.Student.Field27City}}, {{.Student.Field26Province}} ({{.Student.Field31PostalCode}})</td></tr>
+
+                <tr class="bg-slate-100 font-bold"><td colspan="3" class="border border-slate-800 p-1.5">D. RIWAYAT SEKOLAH, IMUNISASI & BANTUAN</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">40</td><td class="border border-slate-800 p-1">Pernah PAUD / TK-RA Lain</td><td class="border border-slate-800 p-1">PAUD: {{.Student.Field40AttendedPAUD}} | TK/RA Lain: {{.Student.Field41AttendedTKRA}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">42</td><td class="border border-slate-800 p-1">Status Imunisasi Dasar</td><td class="border border-slate-800 p-1">Hep: {{.Student.Field42ImmuneHepatitis}}, Polio: {{.Student.Field43ImmunePolio}}, BCG: {{.Student.Field44ImmuneBCG}}, Campak: {{.Student.Field45ImmuneCampak}}, DPT: {{.Student.Field46ImmuneDPT}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">47</td><td class="border border-slate-800 p-1">Nomor Kartu Bantuan Sosial</td><td class="border border-slate-800 p-1">KKS: {{.Student.Field47NoKKS}} | PKH: {{.Student.Field48NoPKH}} | KIP: {{.Student.Field49NoKIP}}</td></tr>
+                <tr><td class="border border-slate-800 p-1 text-center">50</td><td class="border border-slate-800 p-1 font-bold">Pernyataan Kebenaran Data</td><td class="border border-slate-800 p-1 font-bold text-emerald-800">SUDAH BENAR DAN SESUAI (DIKONFIRMASI)</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Tanda Tangan Formulir -->
+        <div class="mt-8 flex justify-between text-center text-xs">
+            <div class="w-56">
+                <div>Mengetahui,</div>
+                <div>Orang Tua / Wali Siswa,</div>
+                <div class="h-20"></div>
+                <div class="font-bold underline">{{.Student.Field16FatherName}} / {{.Student.Field32MotherName}}</div>
+            </div>
+            <div class="w-56">
+                <div>{{.School.City}}, {{.DateNow}}</div>
+                <div>Panitia PPDB / Operator,</div>
+                <div class="h-20"></div>
+                <div class="font-bold underline">Panitia PPDB Madrasah</div>
+            </div>
+        </div>
+        {{if .Settings.DocumentFooter}}<p class="mt-6 border-t border-slate-300 pt-2 text-center text-[10px] text-slate-600">{{.Settings.DocumentFooter}}</p>{{end}}
+    </div>
+
+</body>
+</html>

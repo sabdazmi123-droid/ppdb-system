@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Daftar Hadir Siswa - {{.School.SchoolName}}</title>
+    <style>
+        @page { size: A4 portrait; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 11px; }
+        .toolbar { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+        .print-button { border: 0; border-radius: 6px; background: #087f5b; color: white; cursor: pointer; font-size: 12px; font-weight: 700; padding: 9px 14px; }
+        header { border-bottom: 2px solid #087f5b; margin-bottom: 16px; padding-bottom: 10px; text-align: center; }
+        .school-brand { align-items: center; display: flex; gap: 12px; justify-content: center; margin-bottom: 8px; text-align: left; }
+        .school-brand img { height: 62px; object-fit: contain; width: 62px; }
+        .school-brand p { margin: 2px 0; }
+        .school-brand .school-name { font-size: 15px; font-weight: 700; }
+        header h1 { font-size: 16px; letter-spacing: .5px; margin: 0 0 4px; }
+        header p { color: #475569; margin: 2px 0; }
+        .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 20px; margin: 12px 0; }
+        .meta strong { display: inline-block; min-width: 86px; }
+        table { border-collapse: collapse; table-layout: fixed; width: 100%; }
+        thead { display: table-header-group; }
+        tr { break-inside: avoid; page-break-inside: avoid; }
+        th, td { border: 1px solid #334155; padding: 6px 5px; vertical-align: middle; }
+        th { background: #e9f3ef; font-size: 10px; text-align: center; }
+        td.no { text-align: center; width: 5%; }
+        td.nis { font-family: monospace; font-size: 9px; width: 17%; }
+        td.name { width: 31%; }
+        td.gender { text-align: center; width: 8%; }
+        td.birth { width: 19%; }
+        td.signature { width: 20%; height: 30px; }
+        .empty { color: #64748b; padding: 20px; text-align: center; }
+        .signatures { display: flex; justify-content: space-between; margin: 28px 10px 0; text-align: center; }
+        .signatures div { min-width: 180px; }
+        .signatures .space { height: 55px; }
+        @media print {
+            .toolbar { display: none; }
+            body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        }
+        @media screen {
+            body { margin: 24px auto; max-width: 900px; padding: 0 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar"><button class="print-button" onclick="window.print()">Cetak Absensi</button></div>
+    <header>
+        <div class="school-brand">
+            <img src="/static/img/logotk.png" alt="Logo RA Tunas Cendekia">
+            <div>
+                <p class="school-name">{{.School.SchoolName}}</p>
+                <p>{{.School.Address}}</p>
+                <p>{{.School.City}}</p>
+            </div>
+        </div>
+        <h1>DAFTAR HADIR SISWA</h1>
+        <p>Tahun pelajaran: ____________________</p>
+    </header>
+    <div class="meta">
+        <div><strong>Kelas</strong>: {{if .SelectedClass}}{{.SelectedClass}}{{else}}Semua Kelas{{end}}</div>
+        <div><strong>Hari/Tanggal</strong>: ____________________</div>
+        <div><strong>Wali Kelas</strong>: {{if .ClassDetail.HomeroomTeacher}}{{.ClassDetail.HomeroomTeacher}}{{else}}____________________{{end}}</div>
+        <div><strong>Guru Pengajar</strong>: {{if .ClassDetail.TeacherName}}{{.ClassDetail.TeacherName}}{{else}}____________________{{end}}</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width:5%">No</th>
+                <th style="width:17%">NIS Lokal</th>
+                <th style="width:31%">Nama Siswa</th>
+                <th style="width:8%">L/P</th>
+                <th style="width:19%">Tempat, Tanggal Lahir</th>
+                <th style="width:20%">Paraf / Keterangan</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{range $index, $student := .Students}}
+            <tr>
+                <td class="no">{{add1 $index}}</td>
+                <td class="nis">{{$student.NISLokal}}</td>
+                <td class="name">{{$student.Field01FullName}}</td>
+                <td class="gender">{{if eq $student.Field06Gender "Laki-laki"}}L{{else if eq $student.Field06Gender "Perempuan"}}P{{else}}{{$student.Field06Gender}}{{end}}</td>
+                <td class="birth">{{$student.Field02BirthPlace}}, {{$student.Field03BirthDate}}</td>
+                <td class="signature"></td>
+            </tr>
+            {{else}}
+            <tr><td colspan="6" class="empty">Belum ada siswa aktif pada daftar ini.</td></tr>
+            {{end}}
+        </tbody>
+    </table>
+    <div class="signatures">
+        <div><div>Mengetahui,<br>Kepala Madrasah</div><div class="space"></div><strong>{{.School.PrincipalName}}</strong></div>
+        <div><div>Wali Kelas / Guru</div><div class="space"></div><strong>{{if .ClassDetail.HomeroomTeacher}}{{.ClassDetail.HomeroomTeacher}}{{else}}____________________{{end}}</strong></div>
+    </div>
+</body>
+</html>

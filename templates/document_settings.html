@@ -1,0 +1,40 @@
+{{define "content"}}
+<div class="mx-auto max-w-3xl space-y-5">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+        <div class="flex items-start gap-3">
+            <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700"><i class="fa-solid fa-file-pdf text-xl"></i></span>
+            <div><h1 class="text-lg font-extrabold text-slate-800">Template Dokumen PDF</h1><p class="mt-1 text-sm text-slate-500">Atur kop, judul, gaya, dan catatan untuk formulir pendaftaran serta surat akun siswa.</p></div>
+        </div>
+    </div>
+    {{if .SuccessMsg}}<div role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">{{.SuccessMsg}}</div>{{end}}
+    {{if .ErrorMsg}}<div role="alert" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-800">{{.ErrorMsg}}</div>{{end}}
+    <form method="POST" class="space-y-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+        <div>
+            <label for="document_style" class="mb-1.5 block text-sm font-bold text-slate-700">Gaya template</label>
+            <select id="document_style" name="document_style" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                <option value="formal" {{if ne .Settings.DocumentStyle "minimal"}}selected{{end}}>Formal Hijau</option>
+                <option value="minimal" {{if eq .Settings.DocumentStyle "minimal"}}selected{{end}}>Minimal Hitam</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-500">Gaya yang sama digunakan di PDF formulir dan surat akun.</p>
+        </div>
+        <div>
+            <label for="document_header" class="mb-1.5 block text-sm font-bold text-slate-700">Kop / nama instansi</label>
+            <input id="document_header" name="document_header" maxlength="240" value="{{.Settings.DocumentHeader}}" placeholder="KEMENTERIAN AGAMA REPUBLIK INDONESIA" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <div>
+            <label for="form_pdf_title" class="mb-1.5 block text-sm font-bold text-slate-700">Judul formulir siswa</label>
+            <input id="form_pdf_title" name="form_pdf_title" maxlength="240" value="{{.Settings.FormPDFTitle}}" placeholder="FORMULIR PENERIMAAN PESERTA DIDIK BARU (PPDB)" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <div>
+            <label for="account_pdf_title" class="mb-1.5 block text-sm font-bold text-slate-700">Judul surat akun siswa</label>
+            <input id="account_pdf_title" name="account_pdf_title" maxlength="240" value="{{.Settings.AccountPDFTitle}}" placeholder="INFORMASI AKUN SISWA" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+        </div>
+        <div>
+            <label for="document_footer" class="mb-1.5 block text-sm font-bold text-slate-700">Catatan kaki dokumen</label>
+            <textarea id="document_footer" name="document_footer" maxlength="500" rows="3" placeholder="Simpan informasi akun dengan baik dan jangan bagikan kepada orang lain." class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">{{.Settings.DocumentFooter}}</textarea>
+            <p class="mt-1 text-xs text-slate-500">Kosongkan untuk menggunakan catatan bawaan.</p>
+        </div>
+        <div class="flex justify-end border-t border-slate-100 pt-4"><button class="rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-800"><i class="fa-solid fa-floppy-disk mr-2"></i>Simpan Template</button></div>
+    </form>
+</div>
+{{end}}

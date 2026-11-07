@@ -1,0 +1,323 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-shield text-teal-600"></i> Data Siswa Lulus & Arsip Ijazah
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Data kelulusan, nomor seri ijazah, dan dokumen scan ijazah digital alumni.
+            </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+            <!-- DIATAS PILIHAN TAHUN PELAJARAN SESUAI SPESIFIKASI -->
+            <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                <span class="text-xs font-bold text-slate-600 pl-2">Tahun:</span>
+                <select onchange="window.location.href='/siswa-lulus?year='+this.value" class="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-teal-500 text-slate-800">
+                    <option value="all" {{if eq .YearFilter "all"}}selected{{end}}>Semua Tahun</option>
+                    {{range .AcademicYears}}<option value="{{.}}" {{if eq $.YearFilter .}}selected{{end}}>{{.}}</option>{{end}}
+                </select>
+            </div>
+
+            <!-- TAMBAH MENU IMPORT UNTUK MEMASUKKAN SISWA LULUS TAHUN SEBELUMNYA -->
+            <button onclick="document.getElementById('importModal').classList.remove('hidden')"
+                class="px-3.5 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-file-import"></i> Import Alumni
+            </button>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+    {{if .ErrorMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-red-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                </div>
+                <input type="text" id="searchInput_lulus" placeholder="Cari nama alumni, NIK, NIS, No Ijazah..."
+                    class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 focus:bg-white outline-none transition font-medium placeholder-slate-400">
+            </div>
+            <!-- Tahun Filter -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-graduation-cap text-slate-400 text-xs"></i>
+                </div>
+                <select id="filterTahun_lulus"
+                    class="pl-8 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-400 focus:border-teal-400 outline-none transition font-semibold text-slate-700 appearance-none cursor-pointer w-full sm:w-auto">
+                    <option value="">Semua Tahun Lulus</option>
+                    {{range .AcademicYears}}<option value="{{.}}">{{.}}</option>{{end}}
+                </select>
+            </div>
+        </div>
+        <!-- Results Counter -->
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-slate-400 text-xs"></i>
+            <span id="counterText_lulus" class="text-xs text-slate-500 font-semibold">Menampilkan 0 dari 0 alumni</span>
+        </div>
+    </div>
+
+    <!-- Container Data Kelulusan -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-sm text-slate-800">Daftar Kelulusan Alumni</h3>
+            <span class="text-xs text-slate-500 font-semibold">{{len .Students}} Alumni</span>
+        </div>
+
+        <!-- TAMPILAN KHUSUS HP (MOBILE CARD VIEW) -->
+        <div class="block lg:hidden space-y-3">
+            {{range $index, $st := .Students}}
+            <div class="lulus-item-mobile p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5"
+                data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-nis="{{$st.NISLokal}}" data-tahun="{{if $st.GraduationYear}}{{$st.GraduationYear}}{{else}}{{$st.AcademicYear}}{{end}}" data-ijazah="{{$st.CertificateNumber}}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-900 truncate">{{$st.Field01FullName}}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">NIK: {{$st.Field05NIK}}</div>
+                    </div>
+                    <span class="px-2 py-0.5 bg-teal-100 text-teal-800 font-bold rounded-lg text-[10px] flex-shrink-0">
+                        <i class="fa-solid fa-graduation-cap"></i> Lulus
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-[11px] bg-white p-2.5 rounded-lg border border-slate-100">
+                    <div>
+                        <span class="text-[9px] text-slate-400 uppercase font-semibold block">Tahun Lulus</span>
+                        <span class="font-bold text-teal-700">{{if $st.GraduationYear}}{{$st.GraduationYear}}{{else}}{{$st.AcademicYear}}{{end}}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-slate-400 uppercase font-semibold block">Nomor Ijazah</span>
+                        <span class="font-mono font-bold text-slate-800 text-[10px] block truncate">
+                            {{if $st.CertificateNumber}}{{$st.CertificateNumber}}{{else}}<span class="text-slate-400 font-normal italic">-</span>{{end}}
+                        </span>
+                    </div>
+                </div>
+
+                <div>
+                    {{if $st.CertificateScanURL}}
+                    <a href="{{$st.CertificateScanURL}}" target="_blank"
+                        class="w-full py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf text-red-500"></i> Buka Scan Ijazah Digital
+                    </a>
+                    {{else}}
+                    <div class="text-center py-1.5 bg-slate-100 rounded-lg text-[10px] text-slate-400 italic">
+                        Berkas scan ijazah belum diunggah
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{else}}
+            <div class="text-center py-8 text-slate-400 text-xs">Belum ada data siswa lulus pada filter tahun ini.</div>
+            {{end}}
+        </div>
+
+        <!-- TAMPILAN TABEL DESKTOP -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                        <th class="py-3 px-3">No</th>
+                        <th class="py-3 px-3">Nama Lengkap Siswa</th>
+                        <th class="py-3 px-3">NISN / NIS Lokal</th>
+                        <th class="py-3 px-3">Tahun Kelulusan</th>
+                        <th class="py-3 px-3">Nomor Seri Ijazah</th>
+                        <th class="py-3 px-3">Hasil Scan Ijazah</th>
+                        <th class="py-3 px-3 text-center">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium" id="tableBody_lulus">
+                    {{range $index, $st := .Students}}
+                    <tr class="lulus-item-desktop hover:bg-slate-50/80 transition"
+                        data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-nis="{{$st.NISLokal}}" data-tahun="{{if $st.GraduationYear}}{{$st.GraduationYear}}{{else}}{{$st.AcademicYear}}{{end}}" data-ijazah="{{$st.CertificateNumber}}">
+                        <td class="py-3 px-3 text-slate-400 font-semibold">{{add1 $index}}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800">{{$st.Field01FullName}}</div>
+                            <div class="text-[11px] text-slate-400">NIK: {{$st.Field05NIK}}</div>
+                        </td>
+                        <td class="py-3 px-3 font-mono font-bold text-slate-700">
+                            {{$st.NISN}}
+                            <div class="text-[11px] text-emerald-700">{{$st.NISLokal}}</div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="px-2.5 py-1 bg-teal-50 text-teal-800 rounded-lg font-bold text-[11px]">
+                                {{if $st.GraduationYear}}{{$st.GraduationYear}}{{else}}{{$st.AcademicYear}}{{end}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 font-mono font-bold text-slate-800">
+                            {{if $st.CertificateNumber}}
+                            <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                {{$st.CertificateNumber}}
+                            </span>
+                            {{else}}
+                            <span class="text-slate-400 italic">Belum diinput</span>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            {{if $st.CertificateScanURL}}
+                            <div class="flex items-center justify-center">
+                                <a href="{{$st.CertificateScanURL}}" target="_blank"
+                                    class="w-7 h-7 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold border border-emerald-200 transition flex items-center justify-center shadow-xs" title="Lihat Scan Ijazah Digital">
+                                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                                </a>
+                            </div>
+                            {{else}}
+                            <span class="text-slate-400 italic text-[11px]">-</span>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-teal-100 text-teal-800">
+                                <i class="fa-solid fa-graduation-cap"></i> Lulus
+                            </span>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="7" class="text-center py-10 text-slate-400">Belum ada data siswa lulus pada filter tahun ini.</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function() {
+        const searchInput = document.getElementById('searchInput_lulus');
+        const filterTahun = document.getElementById('filterTahun_lulus');
+        const counterText = document.getElementById('counterText_lulus');
+
+        function filterData() {
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            const tahun = (filterTahun ? filterTahun.value : '').toLowerCase().trim();
+
+            let total = 0;
+            let visible = 0;
+
+            // Desktop
+            const rows = document.querySelectorAll('.lulus-item-desktop');
+            total = rows.length;
+            rows.forEach(row => {
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                const nik = (row.getAttribute('data-nik') || '').toLowerCase();
+                const nis = (row.getAttribute('data-nis') || '').toLowerCase();
+                const rowTahun = (row.getAttribute('data-tahun') || '').toLowerCase();
+                const ijazah = (row.getAttribute('data-ijazah') || '').toLowerCase();
+
+                const matchQuery = !query || name.includes(query) || nik.includes(query) || nis.includes(query) || ijazah.includes(query);
+                const matchTahun = !tahun || rowTahun.includes(tahun);
+
+                if (matchQuery && matchTahun) {
+                    row.style.display = '';
+                    visible++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Mobile
+            const cards = document.querySelectorAll('.lulus-item-mobile');
+            cards.forEach(card => {
+                const name = (card.getAttribute('data-name') || '').toLowerCase();
+                const nik = (card.getAttribute('data-nik') || '').toLowerCase();
+                const nis = (card.getAttribute('data-nis') || '').toLowerCase();
+                const cardTahun = (card.getAttribute('data-tahun') || '').toLowerCase();
+                const ijazah = (card.getAttribute('data-ijazah') || '').toLowerCase();
+
+                const matchQuery = !query || name.includes(query) || nik.includes(query) || nis.includes(query) || ijazah.includes(query);
+                const matchTahun = !tahun || cardTahun.includes(tahun);
+
+                card.style.display = (matchQuery && matchTahun) ? '' : 'none';
+            });
+
+            if (counterText) {
+                counterText.innerText = 'Menampilkan ' + visible + ' dari ' + total + ' alumni';
+            }
+        }
+
+        if (searchInput) searchInput.addEventListener('input', filterData);
+        if (filterTahun) filterTahun.addEventListener('change', filterData);
+        filterData();
+    })();
+</script>
+
+<!-- MODAL IMPORT SISWA LULUS (RESPONSIF MOBILE) -->
+<div id="importModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-teal-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-file-import"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Import Siswa Lulus</h3>
+                <p class="text-xs text-slate-500">Tambahkan rekapitulasi data alumni lulusan lampau</p>
+            </div>
+        </div>
+
+        <form action="/siswa-lulus/import" method="POST" class="space-y-3 sm:space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Lengkap Alumni *</label>
+                    <input type="text" name="name" required placeholder="Nama siswa"
+                        class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-teal-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">NIK Alumni *</label>
+                    <input type="text" name="nik" required placeholder="16 digit NIK" inputmode="numeric"
+                        class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-teal-500 font-mono">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tahun Kelulusan *</label>
+                    <input type="text" name="grad_year" value="{{.School.CurrentYear}}" required placeholder="Contoh: 2026/2027" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nomor Seri Ijazah *</label>
+                    <input type="text" name="cert_number" required placeholder="DN-02/RA/24/000999"
+                        class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">NISN</label>
+                    <input type="text" name="nisn" placeholder="Nomor NISN"
+                        class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">NIS Lokal</label>
+                    <input type="text" name="nis_lokal" placeholder="Nomor NIS Lokal"
+                        class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono">
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">Batal</button>
+                <button type="submit" class="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold shadow-md">
+                    Simpan Data Alumni
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{{end}}

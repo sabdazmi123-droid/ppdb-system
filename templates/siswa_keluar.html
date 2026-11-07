@@ -1,0 +1,225 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket text-orange-600"></i> Data Siswa Keluar / Mutasi
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Rekapitulasi berkas peserta didik yang pindah madrasah/sekolah lain atau mutasi keluar.
+            </p>
+        </div>
+
+        <!-- DI ATAS PILIHAN TAHUN PELAJARAN SESUAI SPESIFIKASI -->
+        <div class="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 self-start sm:self-auto">
+            <span class="text-xs font-bold text-slate-600 pl-2">Tahun:</span>
+            <select onchange="window.location.href='/siswa-keluar?year='+this.value" class="text-xs font-bold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:ring-emerald-500 text-slate-800">
+                {{range .AcademicYears}}<option value="{{.}}" {{if eq $.YearFilter .}}selected{{end}}>{{.}}</option>{{end}}
+                <option value="all" {{if eq .YearFilter "all"}}selected{{end}}>Semua Tahun</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Alert Success -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                </div>
+                <input type="text" id="searchInput_keluar" placeholder="Cari nama siswa, NIS, NIK, tujuan..."
+                    class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 focus:bg-white outline-none transition font-medium placeholder-slate-400">
+            </div>
+            <!-- Kelas Filter -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-chalkboard-user text-slate-400 text-xs"></i>
+                </div>
+                <select id="filterKelas_keluar"
+                    class="pl-8 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition font-semibold text-slate-700 appearance-none cursor-pointer w-full sm:w-auto">
+                    <option value="">Semua Kelas</option>
+                    <option value="Kelas A">Kelas A</option>
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+            </div>
+        </div>
+        <!-- Results Counter -->
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-slate-400 text-xs"></i>
+            <span id="counterText_keluar" class="text-xs text-slate-500 font-semibold">Menampilkan 0 dari 0 data</span>
+        </div>
+    </div>
+
+    <!-- Container Siswa Keluar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-sm text-slate-800">Daftar Siswa Keluar (Periode: {{.YearFilter}})</h3>
+            <span class="text-xs text-slate-500 font-semibold">{{len .Students}} Siswa</span>
+        </div>
+
+        <!-- TAMPILAN KHUSUS HP (MOBILE CARD VIEW) -->
+        <div class="block lg:hidden space-y-3">
+            {{range $index, $st := .Students}}
+            <div class="keluar-item-mobile p-3.5 rounded-xl border border-slate-200 bg-slate-50/80 space-y-2.5"
+                data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-nis="{{$st.NISLokal}}" data-kelas="{{$st.CurrentClass}}" data-tujuan="{{$st.OutSchoolTarget}}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-900 truncate">{{$st.Field01FullName}}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">NIS: {{$st.NISLokal}} &bull; Kelas: {{$st.CurrentClass}}</div>
+                    </div>
+                    <span class="px-2 py-0.5 bg-orange-100 text-orange-800 font-bold rounded-lg text-[10px] flex-shrink-0">
+                        Mutasi Keluar
+                    </span>
+                </div>
+
+                <div class="p-2.5 bg-white rounded-lg border border-slate-100 text-[11px] space-y-1">
+                    <div>
+                        <span class="text-slate-400 font-semibold">Tujuan:</span>
+                        <span class="font-bold text-orange-700 ml-1">{{$st.OutSchoolTarget}}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 font-semibold">Alasan:</span>
+                        <span class="text-slate-600 ml-1">{{$st.OutReason}}</span>
+                    </div>
+                    <div class="text-[10px] text-slate-400">
+                        Tanggal Keluar: {{$st.OutDate}}
+                    </div>
+                </div>
+
+                <button onclick="alert('Mencetak Surat Keterangan Pindah Madrasah untuk {{$st.Field01FullName}}')"
+                    class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Cetak Surat Pindah Madrasah
+                </button>
+            </div>
+            {{else}}
+            <div class="text-center py-8 text-slate-400 text-xs">Tidak ada data siswa keluar pada periode ini.</div>
+            {{end}}
+        </div>
+
+        <!-- TAMPILAN TABEL DESKTOP -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                        <th class="py-3 px-3">No</th>
+                        <th class="py-3 px-3">Nama Lengkap Siswa</th>
+                        <th class="py-3 px-3">NIS Lokal / NISN</th>
+                        <th class="py-3 px-3">Kelas Terakhir</th>
+                        <th class="py-3 px-3">Madrasah / Sekolah Tujuan</th>
+                        <th class="py-3 px-3">Alasan Pindah</th>
+                        <th class="py-3 px-3">Tanggal Keluar</th>
+                        <th class="py-3 px-3 text-center">Surat Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium" id="tableBody_keluar">
+                    {{range $index, $st := .Students}}
+                    <tr class="keluar-item-desktop hover:bg-slate-50/80 transition"
+                        data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-nis="{{$st.NISLokal}}" data-kelas="{{$st.CurrentClass}}" data-tujuan="{{$st.OutSchoolTarget}}">
+                        <td class="py-3 px-3 text-slate-400 font-semibold">{{add1 $index}}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800">{{$st.Field01FullName}}</div>
+                            <div class="text-[11px] text-slate-400">NIK: {{$st.Field05NIK}}</div>
+                        </td>
+                        <td class="py-3 px-3 font-mono font-bold text-slate-700">
+                            {{$st.NISLokal}}
+                            <div class="text-[11px] text-slate-400">{{$st.NISN}}</div>
+                        </td>
+                        <td class="py-3 px-3">{{$st.CurrentClass}}</td>
+                        <td class="py-3 px-3">
+                            <span class="font-bold text-orange-700 bg-orange-50 px-2 py-0.5 rounded border border-orange-200">
+                                {{$st.OutSchoolTarget}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 text-slate-600">{{$st.OutReason}}</td>
+                        <td class="py-3 px-3 text-slate-500">{{$st.OutDate}}</td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="alert('Mencetak Surat Keterangan Pindah Madrasah untuk {{$st.Field01FullName}}')"
+                                class="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center mx-auto shadow-xs" title="Cetak Surat Keterangan Pindah Madrasah">
+                                <i class="fa-solid fa-print"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-400">Tidak ada data siswa keluar pada periode ini.</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    (function() {
+        const searchInput = document.getElementById('searchInput_keluar');
+        const filterKelas = document.getElementById('filterKelas_keluar');
+        const counterText = document.getElementById('counterText_keluar');
+
+        function filterData() {
+            const query = (searchInput ? searchInput.value : '').toLowerCase().trim();
+            const kelas = (filterKelas ? filterKelas.value : '').toLowerCase().trim();
+
+            let total = 0;
+            let visible = 0;
+
+            // Desktop
+            const rows = document.querySelectorAll('.keluar-item-desktop');
+            total = rows.length;
+            rows.forEach(row => {
+                const name = (row.getAttribute('data-name') || '').toLowerCase();
+                const nik = (row.getAttribute('data-nik') || '').toLowerCase();
+                const nis = (row.getAttribute('data-nis') || '').toLowerCase();
+                const rowKelas = (row.getAttribute('data-kelas') || '').toLowerCase();
+                const tujuan = (row.getAttribute('data-tujuan') || '').toLowerCase();
+
+                const matchQuery = !query || name.includes(query) || nik.includes(query) || nis.includes(query) || tujuan.includes(query);
+                const matchKelas = !kelas || rowKelas.includes(kelas);
+
+                if (matchQuery && matchKelas) {
+                    row.style.display = '';
+                    visible++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Mobile
+            const cards = document.querySelectorAll('.keluar-item-mobile');
+            cards.forEach(card => {
+                const name = (card.getAttribute('data-name') || '').toLowerCase();
+                const nik = (card.getAttribute('data-nik') || '').toLowerCase();
+                const nis = (card.getAttribute('data-nis') || '').toLowerCase();
+                const cardKelas = (card.getAttribute('data-kelas') || '').toLowerCase();
+                const tujuan = (card.getAttribute('data-tujuan') || '').toLowerCase();
+
+                const matchQuery = !query || name.includes(query) || nik.includes(query) || nis.includes(query) || tujuan.includes(query);
+                const matchKelas = !kelas || cardKelas.includes(kelas);
+
+                card.style.display = (matchQuery && matchKelas) ? '' : 'none';
+            });
+
+            if (counterText) {
+                counterText.innerText = 'Menampilkan ' + visible + ' dari ' + total + ' data';
+            }
+        }
+
+        if (searchInput) searchInput.addEventListener('input', filterData);
+        if (filterKelas) filterKelas.addEventListener('change', filterData);
+        filterData();
+    })();
+</script>
+{{end}}

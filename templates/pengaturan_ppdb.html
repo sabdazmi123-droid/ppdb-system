@@ -1,0 +1,36 @@
+{{define "content"}}
+<div class="mx-auto max-w-3xl space-y-5">
+    <div class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+        <div class="flex items-start gap-4">
+            <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700"><i class="fa-solid fa-sliders text-xl"></i></div>
+            <div>
+                <h1 class="text-xl font-extrabold text-slate-900">Pengaturan Pendaftaran</h1>
+                <p class="mt-1 text-sm text-slate-500">Atur tahun ajaran aktif dan buka atau tutup formulir pendaftaran calon siswa.</p>
+            </div>
+        </div>
+    </div>
+
+    {{if .SuccessMsg}}<div role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-bold text-emerald-800">{{.SuccessMsg}}</div>{{end}}
+    {{if .ErrorMsg}}<div role="alert" class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-800">{{.ErrorMsg}}</div>{{end}}
+
+    <form method="POST" action="/pengaturan-ppdb" class="space-y-5 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7">
+        <label class="block">
+            <span class="mb-2 block text-sm font-bold text-slate-700">Tahun ajaran aktif</span>
+            <select name="academic_year" required class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100">
+                {{range .AcademicYears}}<option value="{{.}}" {{if eq $.School.CurrentYear .}}selected{{end}}>{{.}}</option>{{end}}
+            </select>
+            <span class="mt-1 block text-xs text-slate-500">Tahun ini digunakan sebagai tahun ajaran aktif pada informasi sekolah.</span>
+        </label>
+        <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <input type="checkbox" name="registration_open" class="mt-1 h-4 w-4 accent-emerald-600" {{if .School.RegistrationOpen}}checked{{end}}>
+            <span>
+                <span class="block text-sm font-extrabold text-slate-800">Buka pendaftaran calon siswa</span>
+                <span class="mt-1 block text-xs leading-relaxed text-slate-500">Jika dimatikan, calon siswa tidak dapat mengirim formulir pendaftaran baru.</span>
+            </span>
+        </label>
+        <div class="flex justify-end border-t border-slate-100 pt-4">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-800"><i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan</button>
+        </div>
+    </form>
+</div>
+{{end}}

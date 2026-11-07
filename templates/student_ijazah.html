@@ -1,0 +1,85 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-shield text-emerald-600"></i> Dokumen Ijazah & Kelulusan
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Arsip digital hasil scan ijazah resmi dan nomor seri kelulusan peserta didik.
+            </p>
+        </div>
+    </div>
+
+    <!-- Informasi Nomor Seri Ijazah -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-800 pb-3 border-b border-slate-100 flex items-center gap-2 mb-3 sm:mb-4">
+            <i class="fa-solid fa-certificate text-emerald-600"></i> Informasi Ijazah Siswa
+        </h3>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+            <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] sm:text-[11px] text-slate-400 font-semibold block uppercase">Nomor Seri Ijazah</span>
+                <span class="text-sm sm:text-base font-mono font-bold text-slate-800 mt-1 block truncate">
+                    {{if .Student.CertificateNumber}}{{.Student.CertificateNumber}}{{else}}<span class="text-slate-400 text-xs italic">Diterbitkan saat kelulusan</span>{{end}}
+                </span>
+            </div>
+            <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] sm:text-[11px] text-slate-400 font-semibold block uppercase">Tahun Kelulusan</span>
+                <span class="text-sm sm:text-base font-bold text-teal-700 mt-1 block truncate">
+                    {{if .Student.GraduationYear}}{{.Student.GraduationYear}}{{else}}<span class="text-slate-400 text-xs italic">Menempuh pendidikan</span>{{end}}
+                </span>
+            </div>
+            <div class="p-3.5 sm:p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <span class="text-[10px] sm:text-[11px] text-slate-400 font-semibold block uppercase">Status Siswa</span>
+                <span class="text-sm sm:text-base font-bold text-emerald-700 mt-1 block truncate">
+                    {{if or (eq .Student.StudentStatus "LULUS") .Student.GraduationYear}}LULUS{{else if .Student.StatusKeaktifan}}{{.Student.StatusKeaktifan}}{{else}}{{.Student.StudentStatus}}{{end}}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- HASIL SCAN IJAZAH -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <h3 class="font-bold text-sm text-slate-800 pb-3 border-b border-slate-100 flex items-center gap-2 mb-3 sm:mb-4">
+            <i class="fa-solid fa-file-pdf text-red-500"></i> Hasil Scan Ijazah Siswa
+        </h3>
+
+        {{if .Student.CertificateScanURL}}
+        <div class="space-y-3 sm:space-y-4">
+            <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-file-pdf text-3xl text-red-500 flex-shrink-0"></i>
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-800 truncate">Scan_Ijazah_{{.Student.Field01FullName}}.pdf</div>
+                        <div class="text-[11px] text-slate-500 truncate">Nomor Seri: {{.Student.CertificateNumber}}</div>
+                    </div>
+                </div>
+                <a href="{{.Student.CertificateScanURL}}" target="_blank"
+                    class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-download"></i> Unduh / Buka Dokumen
+                </a>
+            </div>
+
+            <!-- Preview Frame -->
+            <div class="w-full h-72 sm:h-96 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center">
+                <iframe src="{{.Student.CertificateScanURL}}" class="w-full h-full"></iframe>
+            </div>
+        </div>
+        {{else}}
+        <div class="text-center py-10 sm:py-12 bg-slate-50 rounded-xl border border-dashed border-slate-200 px-4">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto text-xl sm:text-2xl mb-3">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h4 class="font-bold text-xs sm:text-sm text-slate-700">Dokumen Scan Ijazah Belum Diunggah</h4>
+            <p class="text-[11px] text-slate-400 mt-1 max-w-sm mx-auto leading-relaxed">
+                Dokumen hasil scan ijazah akan otomatis diunggah dan diverifikasi oleh pihak operator madrasah saat proses kelulusan akhir selesai.
+            </p>
+        </div>
+        {{end}}
+    </div>
+
+</div>
+{{end}}

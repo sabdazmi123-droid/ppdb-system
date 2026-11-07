@@ -1,0 +1,503 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-emerald-600"></i> Verifikasi Formulir PPDB
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Tinjau formulir pendaftaran. Klik <b>Approve</b> untuk menerbitkan NIS Lokal & rombel, atau <b>Perbaiki</b> untuk revisi (data berstatus merah).
+            </p>
+        </div>
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-[11px] sm:text-xs font-bold border border-emerald-200">
+                <i class="fa-solid fa-calculator"></i> NIS: NSM+Tahun+4 Digit
+            </span>
+        </div>
+    </div>
+
+    <!-- Alert Success / Error -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+    {{if .ErrorMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-red-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Search & Filter Bar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-sm">
+        <div class="flex flex-col sm:flex-row gap-3">
+            <!-- Search Input -->
+            <div class="relative flex-1">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                </div>
+                <input type="text" id="searchInput_ppdb" placeholder="Cari nama, NIK, NIS lokal..."
+                    class="w-full pl-9 pr-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 focus:bg-white outline-none transition font-medium placeholder-slate-400">
+            </div>
+            <!-- Kelas Filter -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-chalkboard-user text-slate-400 text-xs"></i>
+                </div>
+                <select id="filterKelas_ppdb"
+                    class="pl-8 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition font-semibold text-slate-700 appearance-none cursor-pointer w-full sm:w-auto">
+                    <option value="">Semua Kelas</option>
+                    <option value="Kelas A">Kelas A</option>
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+            </div>
+            <div class="relative">
+                <select id="filterTahun_ppdb" class="py-2.5 px-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 outline-none font-semibold text-slate-700 w-full sm:w-auto" aria-label="Filter tahun ajaran">
+                    <option value="">Semua Tahun Ajaran</option>{{range .AcademicYears}}<option value="{{.}}">{{.}}</option>{{end}}
+                </select>
+            </div>
+            <!-- Status Filter -->
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-filter text-slate-400 text-xs"></i>
+                </div>
+                <select id="filterStatus_ppdb"
+                    class="pl-8 pr-8 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 outline-none transition font-semibold text-slate-700 appearance-none cursor-pointer w-full sm:w-auto">
+                    <option value="">Semua Status</option>
+                    <option value="MENUNGGU">Menunggu</option>
+                    <option value="DISETUJUI">Disetujui</option>
+                    <option value="PERLU_PERBAIKAN">Perlu Perbaikan</option>
+                </select>
+            </div>
+        </div>
+        <!-- Results Counter -->
+        <div class="mt-3 flex items-center gap-2">
+            <i class="fa-solid fa-table-list text-slate-400 text-xs"></i>
+            <span id="counterText_ppdb" class="text-xs text-slate-500 font-semibold">Menampilkan 0 dari 0 data</span>
+        </div>
+    </div>
+
+    <!-- Main Container Data Pendaftar -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-sm text-slate-800">Daftar Formulir Pendaftaran</h3>
+            <div class="flex items-center gap-2">
+                <span class="text-[10px] sm:text-xs px-2.5 py-1 bg-red-100 text-red-700 font-bold rounded-lg flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> Merah = Butuh Perbaikan
+                </span>
+            </div>
+        </div>
+
+        <!-- TAMPILAN KHUSUS HP (MOBILE CARD VIEW) -->
+        <div class="hidden space-y-3">
+            {{range $index, $st := .Students}}
+            <div class="p-3.5 rounded-xl border transition {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}bg-red-50/90 border-red-300 ring-1 ring-red-400{{else}}bg-slate-50/70 border-slate-200{{end}} space-y-2.5"
+                data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-kelas="{{$st.CurrentClass}}" data-status="{{$st.PPDBStatus}}" data-year="{{$st.AcademicYear}}">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-900 truncate {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}text-red-950 font-black{{end}}">
+                            {{$st.Field01FullName}}
+                        </div>
+                        <div class="text-[10px] sm:text-[11px] text-slate-500 font-mono mt-0.5">
+                            NIK: {{$st.Field05NIK}} &bull; {{$st.Field06Gender}}
+                        </div>
+                        {{if $st.FormComplete}}<span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800"><i class="fa-solid fa-circle-check"></i> Formulir lengkap</span>{{else}}<span class="mt-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800"><i class="fa-solid fa-circle-exclamation"></i> Belum lengkap</span>{{end}}
+                    </div>
+                    <div class="flex-shrink-0">
+                        {{if eq $st.PPDBStatus "DISETUJUI"}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <i class="fa-solid fa-circle-check"></i> Disetujui
+                        </span>
+                        {{else if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white shadow-xs">
+                            <i class="fa-solid fa-circle-xmark"></i> Perlu Perbaikan
+                        </span>
+                        {{else}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                            <i class="fa-solid fa-clock"></i> Verifikasi
+                        </span>
+                        {{end}}
+                    </div>
+                </div>
+
+                {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}
+                <div class="text-[11px] text-red-700 bg-white/90 p-2 rounded-lg border border-red-200 leading-snug">
+                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Catatan: {{$st.RevisionNotes}}
+                </div>
+                {{end}}
+
+                <div class="grid grid-cols-2 gap-2 text-[11px] bg-white p-2 rounded-lg border border-slate-100">
+                    <div>
+                        <span class="text-[9px] text-slate-400 uppercase font-semibold block">NIS Lokal:</span>
+                        <span class="font-mono font-bold text-emerald-700">{{if $st.NISLokal}}{{$st.NISLokal}}{{else}}<span class="text-slate-400 italic font-normal">Belum terbit</span>{{end}}</span>
+                    </div>
+                    <div>
+                        <span class="text-[9px] text-slate-400 uppercase font-semibold block">Kelas:</span>
+                        <span class="font-bold text-slate-700">{{if $st.CurrentClass}}{{$st.CurrentClass}}{{else}}-{{end}}</span>
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi di HP -->
+                <div class="flex items-center gap-1.5 pt-1">
+                    <a href="/profile-siswa?nik={{$st.Field05NIK}}" 
+                        class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[11px] font-bold text-center transition flex items-center justify-center gap-1">
+                        <i class="fa-regular fa-eye"></i> Form 50
+                    </a>
+
+                    {{if ne $st.PPDBStatus "DISETUJUI"}}
+                    <button onclick="openApproveModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                        class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-check"></i> Approve
+                    </button>
+                    <button onclick="openRejectModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                        class="flex-1 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1 shadow-sm">
+                        <i class="fa-solid fa-xmark"></i> Perbaiki
+                    </button>
+                    {{else}}
+                    <a href="/siswa-diterima" class="flex-1 py-2 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-[11px] font-bold text-center flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-arrow-right"></i> Emis
+                    </a>
+                    <button onclick="openRejectModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', true)"
+                        class="flex-1 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-[11px] font-bold transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-pen-to-square"></i> Perbaiki Data
+                    </button>
+                    {{end}}
+                </div>
+            </div>
+            {{else}}
+            <div class="text-center py-8 text-slate-400 text-xs">Belum ada formulir pendaftaran.</div>
+            {{end}}
+        </div>
+
+        <!-- TAMPILAN TABEL UNTUK DESKTOP / TABLET -->
+        <div id="ppdbTableWrapper" class="block w-full overflow-x-auto">
+            <table class="w-full min-w-[980px] text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                        <th class="py-3 px-3">No</th>
+                        <th class="py-3 px-3">Nama Lengkap Siswa</th>
+                        <th class="py-3 px-3">NIK</th>
+                        <th class="py-3 px-3">Jenis Kelamin</th>
+                        <th class="py-3 px-3">Tahun Ajaran</th>
+                        <th class="py-3 px-3">Status Verifikasi</th>
+                        <th class="py-3 px-3">Kelengkapan Formulir</th>
+                        <th class="py-3 px-3">NIS Lokal</th>
+                        <th class="py-3 px-3">Alokasi Kelas</th>
+                        <th class="py-3 px-3 text-center">Aksi & Keputusan</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {{range $index, $st := .Students}}
+                    <!-- Kondisi jika berstatus PERLU_PERBAIKAN, berikan highlight baris MERAH sesuai aturan -->
+                    <tr class="transition {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}bg-red-50/80 hover:bg-red-100/60 border-l-4 border-red-500{{else}}hover:bg-slate-50/80{{end}}"
+                        data-name="{{$st.Field01FullName}}" data-nik="{{$st.Field05NIK}}" data-kelas="{{$st.CurrentClass}}" data-status="{{$st.PPDBStatus}}" data-year="{{$st.AcademicYear}}">
+                        <td class="py-3 px-3 font-semibold text-slate-500">{{add1 $index}}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800 {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}text-red-900{{end}}">{{$st.Field01FullName}}</div>
+                            <div class="text-[11px] text-slate-400">TTL: {{$st.Field02BirthPlace}}, {{$st.Field03BirthDate}}</div>
+                            {{if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}
+                            <div class="text-[11px] text-red-600 font-semibold mt-0.5">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Catatan: {{$st.RevisionNotes}}
+                            </div>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3 font-mono font-bold text-slate-700">{{$st.Field05NIK}}</td>
+                        <td class="py-3 px-3">{{$st.Field06Gender}}</td>
+                        <td class="py-3 px-3 font-semibold text-slate-600">{{$st.AcademicYear}}</td>
+                        <td class="py-3 px-3">
+                            {{if eq $st.PPDBStatus "DISETUJUI"}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-circle-check"></i> Disetujui (Diterima)
+                            </span>
+                            {{if $st.ProfileEditAllowed}}
+                            <div class="mt-1 text-[10px] font-bold text-amber-700"><i class="fa-solid fa-pen-to-square"></i> Perbaikan dibuka</div>
+                            {{end}}
+                            {{else if eq $st.PPDBStatus "PERLU_PERBAIKAN"}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-600 text-white shadow-sm">
+                                <i class="fa-solid fa-circle-xmark"></i> Perlu Perbaikan (Ditolak)
+                            </span>
+                            {{else}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                <i class="fa-solid fa-clock"></i> Menunggu Verifikasi
+                            </span>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3">
+                            {{if $st.FormComplete}}<span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-bold text-emerald-800"><i class="fa-solid fa-circle-check"></i> Lengkap</span>{{else}}<span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[10px] font-bold text-amber-800"><i class="fa-solid fa-circle-exclamation"></i> Belum lengkap</span>{{end}}
+                        </td>
+                        <td class="py-3 px-3">
+                            {{if $st.NISLokal}}
+                            <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                {{$st.NISLokal}}
+                            </span>
+                            {{else}}
+                            <span class="text-slate-400 italic">Belum terbit</span>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3 font-semibold text-slate-700">
+                            {{if $st.CurrentClass}}{{$st.CurrentClass}}{{else}}<span class="text-slate-400">-</span>{{end}}
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <!-- Aksi Menyusun Vertikal Atas-Bawah (Simbol Saja) -->
+                            <div class="flex flex-col items-center justify-center gap-1.5 py-1">
+                                <!-- Tombol Lihat Form Lengkap -->
+                                <a href="/profile-siswa?nik={{$st.Field05NIK}}" 
+                                    class="w-7 h-7 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition flex items-center justify-center shadow-xs" title="Lihat 50 Field Lengkap Siswa">
+                                    <i class="fa-regular fa-eye"></i>
+                                </a>
+
+                                {{if ne $st.PPDBStatus "DISETUJUI"}}
+                                <!-- Tombol Approve (Langsung Masuk Siswa Aktif) -->
+                                <button type="button" onclick="openApproveModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                                    class="w-7 h-7 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center shadow-xs" title="Approve & Jadikan Siswa Aktif">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+
+                                <!-- Tombol Perbaiki / Tolak -->
+                                <button type="button" onclick="openRejectModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                                    class="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition flex items-center justify-center shadow-xs" title="Perlu Perbaikan Formulir">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                {{else}}
+                                <!-- Tombol Lihat Siswa Aktif -->
+                                <a href="/siswa-aktif" class="w-7 h-7 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg text-xs font-bold transition flex items-center justify-center shadow-xs" title="Sudah Aktif - Buka Menu Siswa Aktif">
+                                    <i class="fa-solid fa-user-check"></i>
+                                </a>
+                                <button type="button" onclick="openRejectModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}', true)"
+                                    class="w-7 h-7 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg text-xs font-bold transition flex items-center justify-center shadow-xs" title="Buka kembali formulir untuk perbaikan data">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                {{end}}
+                            </div>
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-400">Belum ada formulir pendaftaran.</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL APPROVE (RESPONSIF MOBILE) -->
+<div id="approveModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-emerald-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-check-double"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Setujui & Approve Pendaftar</h3>
+                <p class="text-xs text-slate-500">Penerbitan NIS Lokal & Penempatan Kelas</p>
+            </div>
+        </div>
+
+        <form action="/formulir-ppdb/approve" method="POST" class="space-y-4">
+            <input type="hidden" name="nik" id="approveNik">
+            
+            <div class="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+                <div>Nama Siswa: <span id="approveName" class="font-bold text-slate-800"></span></div>
+                <div>Format NIS Lokal: <span class="font-bold text-emerald-700">{{.School.NSM}} + Tahun Masuk + 4 Digit</span></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Alokasi Kelas Awal</label>
+                <select name="assigned_class" class="w-full text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-emerald-500 font-semibold">
+                    <option value="Kelas A">Kelas A</option>
+                    <option value="Kelas B1">Kelas B1</option>
+                    <option value="Kelas B2">Kelas B2</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="admissionDate" class="mb-1 block text-xs font-bold text-slate-700">Tanggal masuk siswa <span class="text-red-600">*</span></label>
+                <input id="admissionDate" type="date" name="admission_date" required class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-semibold text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100">
+                <p class="mt-1 text-[10px] text-slate-500">Isi tanggal resmi siswa mulai masuk sebelum menyetujui formulir.</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeApproveModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md">
+                    Ya, Approve & Terbitkan NIS
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL PERBAIKI / TOLAK (DATA JADI MERAH) -->
+<div id="rejectModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 border-t-4 border-red-500 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-red-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h3 id="rejectModalTitle" class="font-bold text-base text-slate-800">Kembalikan Untuk Perbaikan</h3>
+                <p id="rejectModalDescription" class="text-xs text-red-500">Data pendaftar akan ditandai berwarna merah</p>
+            </div>
+        </div>
+
+        <form action="/formulir-ppdb/reject" method="POST" class="space-y-4">
+            <input type="hidden" name="nik" id="rejectNik">
+            
+            <div class="p-3 bg-red-50 rounded-xl text-xs text-red-900">
+                Pendaftar: <span id="rejectName" class="font-bold"></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Catatan Kekurangan / Yang Perlu Diperbaiki</label>
+                <textarea name="notes" rows="3" required placeholder="Contoh: Lampiran scan KK buram, NIK Ibu belum 16 digit. Mohon perbaiki segera."
+                    class="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:bg-white outline-none"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeRejectModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">
+                    Batal
+                </button>
+                <button id="rejectModalSubmit" type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold shadow-md">
+                    Tolak & Minta Perbaikan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const searchInput = document.getElementById('searchInput_ppdb');
+        const filterKelas = document.getElementById('filterKelas_ppdb');
+        const filterStatus = document.getElementById('filterStatus_ppdb');
+        const filterTahun = document.getElementById('filterTahun_ppdb');
+        const counterText = document.getElementById('counterText_ppdb');
+
+        // Desktop: tbody rows + empty-state row
+        const tbody = document.querySelector('#ppdbTableWrapper tbody');
+        const mobileContainer = null;
+
+        // Insert empty-state row for desktop
+        const emptyRow = document.createElement('tr');
+        emptyRow.id = 'emptyRow_ppdb';
+        emptyRow.innerHTML = '<td colspan="9" class="text-center py-10 text-slate-400 text-xs hidden"><i class="fa-solid fa-magnifying-glass mr-1.5"></i>Tidak ada data yang sesuai pencarian.</td>';
+        emptyRow.classList.add('hidden');
+        if (tbody) tbody.appendChild(emptyRow);
+
+        // Insert empty-state card for mobile
+        const emptyCard = document.createElement('div');
+        emptyCard.id = 'emptyCard_ppdb';
+        emptyCard.className = 'hidden text-center py-8 text-slate-400 text-xs';
+        emptyCard.innerHTML = '<i class="fa-solid fa-magnifying-glass mr-1.5"></i>Tidak ada data yang sesuai pencarian.';
+        if (mobileContainer) mobileContainer.appendChild(emptyCard);
+
+        function filterPPDB() {
+            const query = searchInput.value.toLowerCase().trim();
+            const kelas = filterKelas.value;
+            const status = filterStatus.value;
+            const tahun = filterTahun.value;
+
+            // Desktop rows
+            let desktopTotal = 0, desktopVisible = 0;
+            if (tbody) {
+                const rows = tbody.querySelectorAll('tr:not(#emptyRow_ppdb)');
+                desktopTotal = rows.length;
+                rows.forEach(function(row) {
+                    const name = (row.dataset.name || '').toLowerCase();
+                    const nik = (row.dataset.nik || '').toLowerCase();
+                    const rowKelas = row.dataset.kelas || '';
+                    const rowStatus = row.dataset.status || '';
+                    const rowYear = row.dataset.year || '';
+                    const matchQuery = !query || name.includes(query) || nik.includes(query);
+                    const matchKelas = !kelas || rowKelas === kelas;
+                    const matchStatus = !status || rowStatus === status;
+                    const matchYear = !tahun || rowYear === tahun;
+                    const show = matchQuery && matchKelas && matchStatus && matchYear;
+                    row.classList.toggle('hidden', !show);
+                    if (show) { desktopVisible++; row.cells[0].textContent = desktopVisible; }
+                });
+                const emptyTd = emptyRow.querySelector('td');
+                if (desktopVisible === 0 && desktopTotal > 0) {
+                    emptyRow.classList.remove('hidden');
+                    if (emptyTd) emptyTd.classList.remove('hidden');
+                } else {
+                    emptyRow.classList.add('hidden');
+                }
+            }
+
+            // Mobile cards
+            let mobileTotal = 0, mobileVisible = 0;
+            if (mobileContainer) {
+                const cards = mobileContainer.querySelectorAll('[data-name]');
+                mobileTotal = cards.length;
+                cards.forEach(function(card) {
+                    const name = (card.dataset.name || '').toLowerCase();
+                    const nik = (card.dataset.nik || '').toLowerCase();
+                    const cardKelas = card.dataset.kelas || '';
+                    const cardStatus = card.dataset.status || '';
+                    const matchQuery = !query || name.includes(query) || nik.includes(query);
+                    const matchKelas = !kelas || cardKelas === kelas;
+                    const matchStatus = !status || cardStatus === status;
+                    const show = matchQuery && matchKelas && matchStatus;
+                    card.classList.toggle('hidden', !show);
+                    if (show) mobileVisible++;
+                });
+                if (mobileVisible === 0 && mobileTotal > 0) {
+                    emptyCard.classList.remove('hidden');
+                } else {
+                    emptyCard.classList.add('hidden');
+                }
+            }
+
+            const total = desktopTotal || mobileTotal;
+            const visible = desktopTotal ? desktopVisible : mobileVisible;
+            counterText.textContent = 'Menampilkan ' + visible + ' dari ' + total + ' data';
+        }
+
+        if (searchInput) searchInput.addEventListener('input', filterPPDB);
+        if (filterKelas) filterKelas.addEventListener('change', filterPPDB);
+        if (filterStatus) filterStatus.addEventListener('change', filterPPDB);
+        if (filterTahun) filterTahun.addEventListener('change', filterPPDB);
+
+        const requestedNIK = new URLSearchParams(window.location.search).get('nik');
+        if (requestedNIK && searchInput) {
+            searchInput.value = requestedNIK;
+        }
+
+        // Init counter on load
+        document.addEventListener('DOMContentLoaded', filterPPDB);
+        filterPPDB();
+    })();
+</script>
+
+<script>
+    function openApproveModal(nik, name) {
+        document.getElementById('approveNik').value = nik;
+        document.getElementById('approveName').innerText = name;
+        document.getElementById('approveModal').classList.remove('hidden');
+    }
+    function closeApproveModal() {
+        document.getElementById('approveModal').classList.add('hidden');
+    }
+    function openRejectModal(nik, name, approved = false) {
+        document.getElementById('rejectNik').value = nik;
+        document.getElementById('rejectName').innerText = name;
+        document.getElementById('rejectModalTitle').innerText = approved ? 'Buka Formulir Untuk Perbaikan' : 'Kembalikan Untuk Perbaikan';
+        document.getElementById('rejectModalDescription').innerText = approved ? 'Siswa akan dapat memperbaiki data dan mengirimkannya kembali.' : 'Data pendaftar akan ditandai berwarna merah';
+        document.getElementById('rejectModalSubmit').innerText = approved ? 'Buka Formulir Perbaikan' : 'Tolak & Minta Perbaikan';
+        document.getElementById('rejectModal').classList.remove('hidden');
+    }
+    function closeRejectModal() {
+        document.getElementById('rejectModal').classList.add('hidden');
+    }
+</script>
+{{end}}

@@ -1,0 +1,6 @@
+data/
+static/uploads/
+ppdb-system.exe
+.git/
+.task-go-cache/
+tmp-template-preview/

@@ -1,0 +1,49 @@
+{{define "content"}}
+<div class="mx-auto max-w-5xl space-y-2">
+    <header class="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:p-4">
+        <div class="flex min-w-0 items-center gap-3">
+            <div class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-full border border-emerald-200 bg-emerald-50 text-xl text-emerald-700">
+                {{if .Student.PhotoURL}}<img src="{{.Student.PhotoURL}}" alt="Foto siswa" class="h-full w-full object-cover">{{else}}<i class="fa-solid fa-user-graduate"></i>{{end}}
+            </div>
+            <div class="min-w-0"><h1 class="truncate text-base font-extrabold text-slate-900 sm:text-lg">{{.Student.Field01FullName}}</h1><p class="mt-1 text-[11px] text-slate-500">Data diri siswa · {{if .Student.CurrentClass}}{{.Student.CurrentClass}}{{else}}Belum mendapat kelas{{end}}</p></div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{.BackURL}}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200"><i class="fa-solid fa-arrow-left"></i> Kembali</a>
+            <a href="/profile-siswa?nik={{.Student.Field05NIK}}" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-800"><i class="fa-solid fa-pen-to-square"></i> Edit</a>
+        </div>
+    </header>
+
+    {{if .SuccessMsg}}<div role="status" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800"><i class="fa-solid fa-circle-check mr-2"></i>{{.SuccessMsg}}</div>{{end}}
+
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 bg-slate-50 px-4 py-2 sm:px-5"><h2 class="text-xs font-extrabold text-slate-800">Status Input EMIS</h2></div>
+        <div class="flex flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>{{if or (eq .Student.EmisStatus "DIINPUT") (eq .Student.EmisStatus "APPROVED_EMIS")}}<span class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-extrabold text-emerald-800"><i class="fa-solid fa-circle-check"></i> Selesai</span>{{else}}<span class="inline-flex items-center gap-2 rounded-full bg-red-100 px-3 py-1 text-xs font-extrabold text-red-800"><i class="fa-solid fa-circle-xmark"></i> Belum selesai</span>{{end}}</div>
+            {{if not (or (eq .Student.EmisStatus "DIINPUT") (eq .Student.EmisStatus "APPROVED_EMIS"))}}
+            <form action="/siswa-diterima/emis" method="POST" onsubmit="return confirm('Tandai bahwa data siswa ini sudah selesai diinput ke EMIS?')">
+                <input type="hidden" name="nik" value="{{.Student.Field05NIK}}"><input type="hidden" name="action" value="selesai"><input type="hidden" name="return_to" value="profile-view"><input type="hidden" name="class" value="{{.Student.CurrentClass}}">
+                <button type="submit" class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-xs font-extrabold text-white shadow-sm hover:bg-emerald-800"><i class="fa-solid fa-check"></i> Tandai Selesai</button>
+            </form>
+            {{end}}
+        </div>
+    </section>
+
+    {{range .Sections}}
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <h2 class="bg-slate-100 px-4 py-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-700 sm:px-5">{{.Title}}</h2>
+        <div class="px-4 sm:px-5">
+            {{range .Rows}}
+            <div class="grid grid-cols-[minmax(115px,34%)_10px_minmax(0,1fr)] gap-1 py-2 text-xs leading-normal sm:grid-cols-[minmax(200px,30%)_12px_minmax(0,1fr)] sm:gap-2 sm:py-2.5 sm:text-sm">
+                <div class="break-words font-medium uppercase leading-normal text-slate-500">{{.Label}}</div><div class="text-slate-700">:</div><div class="min-w-0 break-words leading-normal text-slate-900">{{.Value}}</div>
+            </div>
+            {{end}}
+        </div>
+    </section>
+    {{end}}
+
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <h2 class="bg-slate-100 px-4 py-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-700 sm:px-5">Pernyataan</h2>
+        <div class="px-4 py-2 text-[11px] text-slate-700 sm:px-5 sm:text-xs">{{if .Student.Field50IsConfirmed}}<i class="fa-solid fa-circle-check mr-2 text-emerald-600"></i>Siswa/wali telah menyatakan data benar.{{else}}<i class="fa-solid fa-circle-xmark mr-2 text-red-600"></i>Pernyataan kebenaran data belum dicentang.{{end}}</div>
+    </section>
+</div>
+{{end}}

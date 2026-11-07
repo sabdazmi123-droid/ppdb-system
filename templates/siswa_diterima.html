@@ -1,0 +1,272 @@
+{{define "content"}}
+<div class="space-y-4 sm:space-y-6">
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-100 shadow-sm">
+        <div>
+            <h1 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-600"></i> Siswa Diterima & Sinkronisasi EMIS
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">
+                Kelola pelaporan siswa ke sistem <b>EMIS Kemenag</b> (Di Input, Perbaiki, & Aprove). Setelah <b>Aprove</b>, otomatis terbit <b>Kartu Tanda Siswa (KTS)</b> resmi.
+            </p>
+        </div>
+    </div>
+
+    <!-- Alert Messages -->
+    {{if .SuccessMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-emerald-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.SuccessMsg}}</span>
+    </div>
+    {{end}}
+    {{if .ErrorMsg}}
+    <div class="p-3.5 sm:p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3">
+        <i class="fa-solid fa-triangle-exclamation text-red-600 text-lg flex-shrink-0"></i>
+        <span class="font-bold text-xs sm:text-sm">{{.ErrorMsg}}</span>
+    </div>
+    {{end}}
+
+    <!-- Tabel / Card Siswa Diterima -->
+    <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-100 shadow-sm">
+        <div class="flex items-center justify-between pb-3 sm:pb-4 border-b border-slate-100 mb-4">
+            <h3 class="font-bold text-sm text-slate-800">Daftar Siswa Diterima</h3>
+            <span class="text-xs text-slate-500 font-semibold">{{len .Students}} Siswa</span>
+        </div>
+
+        <!-- TAMPILAN HP (MOBILE CARD VIEW) -->
+        <div class="block lg:hidden space-y-3">
+            {{range $index, $st := .Students}}
+            <div class="p-3.5 rounded-xl border border-slate-200 bg-slate-50/70 space-y-2.5">
+                <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                        <div class="font-bold text-xs sm:text-sm text-slate-900 truncate">{{$st.Field01FullName}}</div>
+                        <div class="text-[10px] text-slate-500 font-mono mt-0.5">NIK: {{$st.Field05NIK}}</div>
+                    </div>
+                    <div>
+                        {{if eq $st.EmisStatus "APPROVED_EMIS"}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                            <i class="fa-solid fa-check-circle"></i> Approved EMIS
+                        </span>
+                        {{else if eq $st.EmisStatus "PERBAIKI_EMIS"}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
+                            <i class="fa-solid fa-rotate-left"></i> Perbaiki EMIS
+                        </span>
+                        {{else if eq $st.EmisStatus "DIINPUT"}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                            <i class="fa-solid fa-paper-plane"></i> Diinput
+                        </span>
+                        {{else}}
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                            <i class="fa-regular fa-clock"></i> Belum Input
+                        </span>
+                        {{end}}
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-1.5 text-[10px] bg-white p-2 rounded-lg border border-slate-100">
+                    <div>
+                        <span class="text-slate-400 block font-semibold">NIS Lokal</span>
+                        <span class="font-mono font-bold text-emerald-700 block truncate">{{$st.NISLokal}}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold">NISN</span>
+                        <span class="font-mono font-bold text-slate-700 block truncate">{{if $st.NISN}}{{$st.NISN}}{{else}}-{{end}}</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-400 block font-semibold">Rombel</span>
+                        <span class="font-bold text-purple-700 block truncate">{{$st.CurrentClass}}</span>
+                    </div>
+                </div>
+
+                <!-- 3 Tombol EMIS Sesuai Spesifikasi: Di Input, Perbaiki & Aprove -->
+                <div class="grid grid-cols-3 gap-1.5 pt-1">
+                    <form action="/siswa-diterima/emis" method="POST" class="w-full">
+                        <input type="hidden" name="nik" value="{{$st.Field05NIK}}">
+                        <input type="hidden" name="action" value="input">
+                        <button type="submit" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Di Input
+                        </button>
+                    </form>
+
+                    <button onclick="openEmisPerbaikiModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                        class="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-pen-to-square"></i> Perbaiki
+                    </button>
+
+                    <form action="/siswa-diterima/emis" method="POST" class="w-full">
+                        <input type="hidden" name="nik" value="{{$st.Field05NIK}}">
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold transition shadow-xs flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-circle-check"></i> Aprove
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Tombol Cetak KTS jika sudah Aprove -->
+                {{if eq $st.EmisStatus "APPROVED_EMIS"}}
+                <a href="/kartu-siswa?nik={{$st.Field05NIK}}" target="_blank"
+                    class="w-full py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-bold text-[11px] shadow transition flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-id-card"></i> Cetak Kartu Siswa (KTS Resmi)
+                </a>
+                {{end}}
+            </div>
+            {{else}}
+            <div class="text-center py-8 text-slate-400 text-xs">Belum ada siswa yang diterima.</div>
+            {{end}}
+        </div>
+
+        <!-- TAMPILAN DESKTOP / TABLET -->
+        <div class="hidden lg:block overflow-x-auto">
+            <table class="w-full text-left text-xs">
+                <thead>
+                    <tr class="bg-slate-50 text-slate-600 font-bold border-b border-slate-100">
+                        <th class="py-3 px-3">No</th>
+                        <th class="py-3 px-3">Nama Siswa</th>
+                        <th class="py-3 px-3">NIS Lokal</th>
+                        <th class="py-3 px-3">NISN</th>
+                        <th class="py-3 px-3">Kelas</th>
+                        <th class="py-3 px-3">Status EMIS</th>
+                        <th class="py-3 px-3 text-center">Proses EMIS (Input / Perbaiki / Approve)</th>
+                        <th class="py-3 px-3 text-center">Kartu Siswa (KTS)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium">
+                    {{range $index, $st := .Students}}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-3 text-slate-400 font-semibold">{{add1 $index}}</td>
+                        <td class="py-3 px-3">
+                            <div class="font-bold text-slate-800">{{$st.Field01FullName}}</div>
+                            <div class="text-[11px] text-slate-400">NIK: {{$st.Field05NIK}}</div>
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="font-mono font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                {{$st.NISLokal}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3 font-mono text-slate-700 font-bold">
+                            {{if $st.NISN}}{{$st.NISN}}{{else}}<span class="text-slate-400 italic">Proses</span>{{end}}
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="px-2 py-1 bg-purple-50 text-purple-700 rounded-md font-bold text-[11px]">
+                                {{$st.CurrentClass}}
+                            </span>
+                        </td>
+                        <td class="py-3 px-3">
+                            {{if eq $st.EmisStatus "APPROVED_EMIS"}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-check-circle"></i> Approved EMIS
+                            </span>
+                            {{else if eq $st.EmisStatus "PERBAIKI_EMIS"}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-red-100 text-red-800">
+                                <i class="fa-solid fa-rotate-left"></i> Perbaiki EMIS
+                            </span>
+                            {{else if eq $st.EmisStatus "DIINPUT"}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">
+                                <i class="fa-solid fa-paper-plane"></i> Diinput ke EMIS
+                            </span>
+                            {{else}}
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                                <i class="fa-regular fa-clock"></i> Belum Input
+                            </span>
+                            {{end}}
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            <div class="flex items-center justify-center gap-1.5">
+                                <form action="/siswa-diterima/emis" method="POST" class="inline">
+                                    <input type="hidden" name="nik" value="{{$st.Field05NIK}}">
+                                    <input type="hidden" name="action" value="input">
+                                    <button type="submit" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded text-[11px] font-bold transition shadow-sm" title="Input data ke EMIS Kemenag">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Di Input
+                                    </button>
+                                </form>
+
+                                <button onclick="openEmisPerbaikiModal('{{$st.Field05NIK}}', '{{$st.Field01FullName}}')"
+                                    class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded text-[11px] font-bold transition shadow-sm" title="Minta perbaikan data EMIS">
+                                    <i class="fa-solid fa-pen-to-square"></i> Perbaiki
+                                </button>
+
+                                <form action="/siswa-diterima/emis" method="POST" class="inline">
+                                    <input type="hidden" name="nik" value="{{$st.Field05NIK}}">
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-[11px] font-bold transition shadow-sm" title="Approve data EMIS dan Terbitkan KTS">
+                                        <i class="fa-solid fa-circle-check"></i> Aprove
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                            {{if eq $st.EmisStatus "APPROVED_EMIS"}}
+                            <a href="/kartu-siswa?nik={{$st.Field05NIK}}" target="_blank"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs shadow transition">
+                                <i class="fa-solid fa-id-card"></i> Cetak KTS
+                            </a>
+                            {{else}}
+                            <span class="text-slate-400 text-[11px] italic" title="Menunggu persetujuan EMIS">
+                                KTS Terbit setelah Aprove EMIS
+                            </span>
+                            {{end}}
+                        </td>
+                    </tr>
+                    {{else}}
+                    <tr>
+                        <td colspan="8" class="text-center py-10 text-slate-400">Belum ada siswa yang diterima.</td>
+                    </tr>
+                    {{end}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal Perbaiki EMIS (RESPONSIF MOBILE) -->
+<div id="emisPerbaikiModal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-4 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center gap-3 text-amber-600 border-b border-slate-100 pb-3">
+            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-xl flex-shrink-0">
+                <i class="fa-solid fa-pen-to-square"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-base text-slate-800">Catatan Perbaikan EMIS</h3>
+                <p class="text-xs text-slate-500">Kirim catatan perbaikan sinkronisasi data EMIS</p>
+            </div>
+        </div>
+
+        <form action="/siswa-diterima/emis" method="POST" class="space-y-4">
+            <input type="hidden" name="nik" id="emisNik">
+            <input type="hidden" name="action" value="perbaiki">
+            
+            <div class="text-xs text-slate-700">
+                Siswa: <span id="emisName" class="font-bold"></span>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Keterangan yang harus diperbaiki di EMIS</label>
+                <textarea name="notes" rows="3" required placeholder="Contoh: Tanggal lahir pada akta tidak cocok dengan KK, atau nomor NIK Ayah belum valid."
+                    class="w-full text-xs p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-amber-500 outline-none"></textarea>
+            </div>
+
+            <div class="flex items-center justify-end gap-3 pt-2">
+                <button type="button" onclick="closeEmisModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold shadow-md">
+                    Simpan Catatan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEmisPerbaikiModal(nik, name) {
+        document.getElementById('emisNik').value = nik;
+        document.getElementById('emisName').innerText = name;
+        document.getElementById('emisPerbaikiModal').classList.remove('hidden');
+    }
+    function closeEmisModal() {
+        document.getElementById('emisPerbaikiModal').classList.add('hidden');
+    }
+</script>
+{{end}}

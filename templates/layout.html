@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RA Tunas Cendekia - {{if eq .CurrentUser.Role "student"}}Portal Siswa{{else}}Sistem PPDB Operator{{end}}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ppdb: {
+                            sidebar: '#074728',
+                            sidebarDark: '#05341d',
+                            active: '#0e7042',
+                            activeHover: '#107d4b',
+                            accent: '#facc15',
+                            bg: '#f4f7f6',
+                            card: '#ffffff'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts: Open Sans, Roboto, Lato, Montserrat, Poppins & Web-safe Arial/Helvetica Fallbacks -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;0,900;1,400&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600&family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Roboto:ital,wght@0,300;0,400;0,500;0,700;0,900;1,400&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* Body & Content: Menggunakan Open Sans & Roboto yang sangat bersih, jernih dan nyaman dibaca */
+        body {
+            font-family: 'Open Sans', 'Roboto', 'Lato', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            background-color: #f4f7f6;
+            -webkit-tap-highlight-color: transparent;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            width: 100%;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        canvas { max-width: 100%; }
+        select {
+            min-width: 0;
+            max-width: 100%;
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: #fff;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m5 7.5 5 5 5-5' stroke='%2364758b' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right .65rem center;
+            background-size: 1rem;
+            padding-right: 2.25rem;
+        }
+        @media (max-width: 639px) {
+            select { min-height: 44px; font-size: 16px; }
+        }
+        /* Heading & Judul: Menggunakan Montserrat & Poppins yang tegas, modern, dan profesional */
+        h1, h2, h3, h4, h5, h6, .font-heading {
+            font-family: 'Montserrat', 'Poppins', 'Roboto', sans-serif;
+        }
+        /* Badge & Label Ringkas */
+        .font-ui {
+            font-family: 'Poppins', 'Lato', sans-serif;
+        }
+        /* Custom scrollbar for sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        .custom-shadow {
+            box-shadow: 0 2px 10px -2px rgba(16, 75, 45, 0.06);
+        }
+        .font-mono {
+            font-family: Arial, Helvetica, sans-serif !important;
+            font-variant-numeric: tabular-nums;
+        }
+        /* Baseline responsive rules shared by every authenticated screen. */
+        html { min-height: 100%; scroll-padding-top: 1rem; }
+        body { min-height: 100dvh; }
+        #mainContent, #mainContent main, #mainContent main > div { min-width: 0; }
+        #mainContent main { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+        #mainContent main img, #mainContent main video, #mainContent main canvas { max-width: 100%; }
+        #mainContent main :where(input, textarea, select) { min-width: 0; max-width: 100%; }
+        #mainContent main :where(button, a) { overflow-wrap: anywhere; }
+        #mainContent main :where(.flex, [class*="grid"]) > * { min-width: 0; }
+        #mainContent main :where(pre, code) { max-width: 100%; overflow-wrap: anywhere; }
+        #mainContent main :where(table) { max-width: 100%; }
+        #mainContent main :where(.overflow-x-auto) {
+            max-width: 100%;
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+        }
+        #mainContent main :where(.overflow-x-auto)::-webkit-scrollbar { height: 5px; }
+        #mainContent main :where(.overflow-x-auto)::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 999px; }
+        #mainContent main :where(input, select, textarea, button) { touch-action: manipulation; }
+        #mainContent > header { min-width: 0; }
+        #mainContent > header > div { min-width: 0; }
+        #mainContent > header #accountMenu { max-width: calc(100vw - 1.5rem); }
+        #mainContent > nav[aria-label], #mainContent > nav.lg\:hidden {
+            padding-bottom: max(.375rem, env(safe-area-inset-bottom));
+        }
+        @media (max-width: 639px) {
+            body { height: 100dvh; }
+            #mainContent > header { min-height: 56px; height: 56px; }
+            #mainContent > header > div:last-child { gap: .25rem; }
+            #mainContent > header > div:last-child > .relative:first-child { display: none; }
+            #mainContent main { padding-left: .75rem; padding-right: .75rem; padding-bottom: calc(5.75rem + env(safe-area-inset-bottom)); }
+            #mainContent main > div { width: 100%; }
+            #mainContent main :where(.rounded-2xl) { border-radius: 1rem; }
+            #mainContent main :where(.overflow-x-auto) { border-radius: .75rem; }
+            #mainContent > nav.lg\:hidden { min-height: 60px; }
+            #mainContent > nav.lg\:hidden a { flex: 1 1 0; min-width: 0; min-height: 44px; padding-left: .2rem; padding-right: .2rem; }
+            /* Keep the applicant list readable without forcing a 1,450px-wide table. */
+            #applicantTable { min-width: 0 !important; width: 100%; table-layout: fixed; }
+            #applicantTable th, #applicantTable td { padding: .55rem .35rem; vertical-align: top; overflow-wrap: anywhere; }
+            #applicantTable th:nth-child(3), #applicantTable td:nth-child(3),
+            #applicantTable th:nth-child(5), #applicantTable td:nth-child(5),
+            #applicantTable th:nth-child(6), #applicantTable td:nth-child(6),
+            #applicantTable th:nth-child(7), #applicantTable td:nth-child(7),
+            #applicantTable th:nth-child(8), #applicantTable td:nth-child(8),
+            #applicantTable th:nth-child(9), #applicantTable td:nth-child(9),
+            #applicantTable th:nth-child(10), #applicantTable td:nth-child(10),
+            #applicantTable th:nth-child(12), #applicantTable td:nth-child(12),
+            #applicantTable th:first-child, #applicantTable td:first-child { display: none; }
+            #applicantTable th:nth-child(2), #applicantTable td:nth-child(2) { width: 31%; }
+            #applicantTable th:nth-child(4), #applicantTable td:nth-child(4) { width: 28%; }
+            #applicantTable th:nth-child(11), #applicantTable td:nth-child(11) { width: 29%; }
+            #applicantTable th:nth-child(13), #applicantTable td:nth-child(13) { width: 44px; }
+            #applicantTable td:nth-child(13) > div { align-items: center; }
+        }
+        @media (max-width: 380px) {
+            #mainContent > header { padding-left: .5rem; padding-right: .5rem; }
+            #mainContent > header > div:first-child { gap: .25rem; }
+            #mainContent > header > div:first-child > div:nth-child(2) { width: 1.8rem; height: 1.8rem; }
+            #mainContent > header > div:first-child h2 { font-size: .68rem; }
+            #mainContent > header > div:first-child span { font-size: .58rem; }
+            #mainContent main { padding-left: .5rem; padding-right: .5rem; }
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased flex h-screen overflow-hidden bg-[#f4f7f6]">
+
+    <!-- MOBILE BACKDROP OVERLAY -->
+    <div id="mobileBackdrop" onclick="toggleSidebar(false)" class="hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 lg:hidden transition-opacity"></div>
+
+    <!-- ======================================================== -->
+    <!-- SIDEBAR UTAMA (SESUAI PERSIS DESAIN WHATSAPP REFERENCE) -->
+    <!-- ======================================================== -->
+    <aside id="mainSidebar" class="fixed lg:static inset-y-0 left-0 z-50 w-72 lg:w-[264px] bg-gradient-to-b from-[#074728] via-[#063c22] to-[#042415] text-white flex flex-col justify-between flex-shrink-0 shadow-2xl lg:shadow-xl transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out overflow-hidden">
+        
+        <!-- BAGIAN ATAS: LOGO HEADER & NAVIGASI MENU -->
+        <div class="flex-1 flex flex-col overflow-y-auto sidebar-scroll relative z-10">
+            
+            <!-- HEADER BRAND: LOGO PPDB + GELOMBANG PITA EMAS (GOLD RIBBON WAVE) -->
+            <div class="pt-5 pb-1 px-4 sm:px-5">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <!-- Logo RA Tunas Cendekia -->
+                        <div class="w-[3.5rem] h-14 flex-shrink-0 flex items-center justify-center">
+                            <img src="/static/img/logotk.png?v=5" alt="Logo RA Tunas Cendekia" class="w-full h-full object-contain drop-shadow-md">
+                        </div>
+                        <!-- Teks PPDB Sistem Penerimaan Peserta Didik Baru -->
+                        <div class="leading-none min-w-0">
+                            <h1 class="font-extrabold text-2xl tracking-wider text-white drop-shadow-xs">PPDB</h1>
+                            <p class="text-[11px] font-medium text-white/90 leading-tight mt-1 tracking-tight">Sistem Penerimaan</p>
+                            <p class="text-[11px] font-medium text-white/90 leading-tight tracking-tight">Peserta Didik Baru</p>
+                        </div>
+                    </div>
+
+                    <!-- Tombol Tutup Sidebar di HP -->
+                    <button onclick="toggleSidebar(false)" class="lg:hidden p-1.5 text-emerald-200 hover:text-white rounded-lg hover:bg-white/10 transition">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- GELOMBANG PITA EMAS MELENGKUNG (GOLD CURVED RIBBON ACCENT) -->
+                <div class="relative w-full -mt-0.5 mb-2 pointer-events-none">
+                    <svg viewBox="0 0 250 26" class="w-full h-auto" fill="none">
+                        <defs>
+                            <linearGradient id="goldRibbonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#fef08a" stop-opacity="0.95" />
+                                <stop offset="35%" stop-color="#fbbf24" stop-opacity="1" />
+                                <stop offset="75%" stop-color="#f59e0b" stop-opacity="0.95" />
+                                <stop offset="100%" stop-color="#d97706" stop-opacity="0.85" />
+                            </linearGradient>
+                            <linearGradient id="goldRibbonGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.4" />
+                                <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.05" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Glow lembut di belakang pita -->
+                        <path d="M 0 16 Q 60 26, 130 13 T 250 4" stroke="url(#goldRibbonGlow)" stroke-width="5" stroke-linecap="round"/>
+                        <!-- Garis lengkung utama emas mengkilap -->
+                        <path d="M 0 16 Q 60 26, 130 13 T 250 4" stroke="url(#goldRibbonGrad)" stroke-width="2.6" stroke-linecap="round"/>
+                        <circle cx="248" cy="4" r="2.2" fill="#fef08a" />
+                    </svg>
+                </div>
+            </div>
+
+            <!-- ROLE BADGE MINIMALIS (KHUSUS ROLE SISWA JIKA LOGIN) -->
+            {{if eq .CurrentUser.Role "student"}}
+            <div class="mx-3.5 mb-2.5">
+                {{if or (eq .CurrentStudent.StatusKeaktifan "Siswa Aktif") (eq .CurrentStudent.PPDBStatus "DISETUJUI")}}
+                <div class="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-[#0e7042] text-white border border-emerald-400/40 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                    <span class="truncate">Siswa Aktif{{if .CurrentStudent.CurrentClass}} ({{.CurrentStudent.CurrentClass}}){{end}}</span>
+                </div>
+                {{else if eq .CurrentStudent.PPDBStatus "PERLU_PERBAIKAN"}}
+                <div class="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-red-600 text-white shadow-sm animate-pulse">
+                    <i class="fa-solid fa-triangle-exclamation text-xs"></i>
+                    <span>Perlu Perbaikan</span>
+                </div>
+                {{else}}
+                <div class="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-2 bg-amber-400 text-emerald-950">
+                    <i class="fa-solid fa-user-clock text-xs"></i>
+                    <span>Calon Siswa</span>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+
+            <!-- DAFTAR MENU NAVIGASI (SESUAI PERSIS DESAIN WHATSAPP REFERENCE) -->
+            <nav class="space-y-1.5 py-1 text-[13px] font-semibold">
+                {{if eq .CurrentUser.Role "student"}}
+                <!-- ================= MENU KHUSUS SISWA ================= -->
+                <!-- 1. Profile Siswa -->
+                <a href="/profile-siswa" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "profile_siswa"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-id-card text-base w-5 text-center"></i>
+                    <span>Profile Siswa</span>
+                </a>
+                <!-- 2. Status Siswa & KTS -->
+                <a href="/student/status" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "student_status"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-address-card text-base w-5 text-center"></i>
+                    <span>Status Siswa & KTS</span>
+                </a>
+                <!-- 3. Raport Digital (RDM) -->
+                <a href="/student/rdm" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "student_rdm"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-book-bookmark text-base w-5 text-center"></i>
+                    <span>Raport Digital (RDM)</span>
+                </a>
+                <!-- 4. Ijazah & Berkas -->
+                <a href="/student/ijazah" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "student_ijazah"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-file-shield text-base w-5 text-center"></i>
+                    <span>Ijazah & Berkas</span>
+                </a>
+
+                {{else}}
+                <!-- ================= 9 MENU ADMIN / OPERATOR SESUAI GAMBAR ================= -->
+                <!-- 1. Home -->
+                <a href="/dashboard" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "dashboard"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-house text-base w-5 text-center"></i>
+                    <span>Home</span>
+                </a>
+
+                <!-- 2. Generate Password -->
+                <a href="/generate-password" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "generate_password"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-key text-base w-5 text-center"></i>
+                    <span>Generate Password</span>
+                </a>
+
+                <!-- 3. Formulir PPDB -->
+                <a href="/formulir-ppdb" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "formulir_ppdb"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-file-lines text-base w-5 text-center"></i>
+                    <span>Formulir PPDB</span>
+                </a>
+
+                <!-- 4. Data Siswa Aktif (Langsung dari Formulir PPDB yang diapprove) -->
+                <a href="/siswa-aktif" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "siswa_aktif"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-users text-base w-5 text-center"></i>
+                    <span>Data Siswa Aktif</span>
+                </a>
+
+                <!-- 6. Pengisian NISN dari EMIS -->
+                <a href="/pengisian-nisn" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "pengisian_npsn"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-id-card text-base w-5 text-center"></i>
+                    <span>Pengisian NISN</span>
+                </a>
+
+                <!-- 7. Kenaikan Kelas & Kelulusan -->
+                <a href="/kenaikan-kelulusan" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "kenaikan_kelulusan"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-graduation-cap text-base w-5 text-center"></i>
+                    <span>Kenaikan Kelas & Kelulusan</span>
+                </a>
+
+                <!-- 8. Data Siswa Keluar -->
+                <a href="/siswa-keluar" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "siswa_keluar"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-base w-5 text-center"></i>
+                    <span>Data Siswa Keluar</span>
+                </a>
+
+                <!-- 9. Data Siswa Lulus -->
+                <a href="/siswa-lulus" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "siswa_lulus"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-id-card-clip text-base w-5 text-center"></i>
+                    <span>Data Siswa Lulus</span>
+                </a>
+                <a href="/admin/cms" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition text-white/90 hover:text-white hover:bg-white/10">
+                    <i class="fa-solid fa-window-maximize text-base w-5 text-center"></i>
+                    <span>CMS Website</span>
+                </a>
+                <a href="/admin/pengaturan-dokumen" class="mx-3 px-3.5 py-2.5 rounded-xl flex items-center gap-3.5 transition {{if eq .ActiveMenu "document_settings"}}bg-[#0e7042] text-white font-bold shadow-md shadow-emerald-950/20{{else}}text-white/90 hover:text-white hover:bg-white/10{{end}}">
+                    <i class="fa-solid fa-file-pdf text-base w-5 text-center"></i>
+                    <span>Template Dokumen PDF</span>
+                </a>
+                {{end}}
+            </nav>
+        </div>
+
+        <!-- ======================================================== -->
+        <!-- BAGIAN BAWAH SIDEBAR: SLOGAN BRUSH + SILUET KUBAH MASJID -->
+        <!-- ======================================================== -->
+        <div class="relative pt-6 pb-2 px-5 mt-auto flex-shrink-0 select-none overflow-hidden">
+            
+            <!-- TIPOGRAFI TEGAS & ELEGAN: "Bersama Membangun Generasi Unggul" -->
+            <div class="relative z-10 mb-5 pl-1">
+                <div class="font-['Montserrat',sans-serif] font-black text-white text-[17px] leading-[1.25] tracking-tight drop-shadow-md">
+                    <div class="opacity-90 uppercase text-[12px] tracking-widest text-emerald-200 font-semibold mb-0.5">Visi Madrasah</div>
+                    <div>Bersama</div>
+                    <div>Membangun</div>
+                    <div class="relative inline-block text-[#fef9c3] italic">
+                        Generasi Unggul
+                        <!-- Coretan Lengkung Emas di Bawah Teks Generasi Unggul -->
+                        <svg class="w-full h-2.5 -mt-0.5 text-amber-400 drop-shadow-sm" viewBox="0 0 170 14" fill="none">
+                            <path d="M 4 8 Q 85 14, 165 4" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SILUET KUBAH MASJID, MENARA & PERBUKITAN HIJAU (LAYERED MOSQUE SILHOUETTE) -->
+            <div class="absolute bottom-0 left-0 right-0 w-full pointer-events-none z-0">
+                <svg viewBox="0 0 280 120" class="w-full h-auto" fill="currentColor">
+                    <!-- Layer 1: Siluet Menara & Kubah Belakang (Transparan) -->
+                    <g class="text-[#085a33] opacity-50">
+                        <!-- Menara Kiri Jauh -->
+                        <path d="M18,120 L18,50 L16,50 L16,40 L21,22 L26,40 L24,50 L24,120 Z"/>
+                        <path d="M21,16 L21,22" stroke="currentColor" stroke-width="1.5"/>
+                        <!-- Kubah Kecil Kiri -->
+                        <path d="M35,120 L35,75 Q50,52 65,75 L65,120 Z"/>
+                        <!-- Kubah Tengah Besar -->
+                        <path d="M90,120 L90,60 Q118,24 135,18 Q152,24 180,60 L180,120 Z"/>
+                        <circle cx="135" cy="15" r="2.5"/>
+                        <path d="M135,10 L135,15" stroke="currentColor" stroke-width="1.5"/>
+                        <!-- Menara Kanan -->
+                        <path d="M205,120 L205,42 L202,42 L202,32 L208,18 L214,32 L211,42 L211,120 Z"/>
+                        <!-- Kubah Kanan -->
+                        <path d="M225,120 L225,68 Q245,46 265,68 L265,120 Z"/>
+                    </g>
+                    <!-- Layer 2: Siluet Bukit & Dinding Depan -->
+                    <g class="text-[#053c22] opacity-80">
+                        <path d="M0,120 L0,78 Q50,60 100,74 Q150,88 200,68 Q240,54 280,70 L280,120 Z"/>
+                        <!-- Pintu Gerbang Lengkung Kecil -->
+                        <path d="M125,120 L125,95 Q135,85 145,95 L145,120 Z" fill="#032615"/>
+                    </g>
+                    <!-- Layer 3: Dasar Lengkung Paling Depan -->
+                    <path d="M0,120 L0,92 Q70,82 140,88 Q210,94 280,84 L280,120 Z" class="text-[#032414] opacity-95"/>
+                </svg>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ======================================================== -->
+    <!-- MAIN CONTENT AREA (NAVBAR ATAS & WRAPPER KONTEN UTAMA) -->
+    <!-- ======================================================== -->
+    <div id="mainContent" class="flex-1 basis-0 flex flex-col overflow-hidden bg-[#f4f7f6] w-full min-w-0">
+        
+        <!-- TOPBAR HEADER (SESUAI PERSIS DESAIN WHATSAPP REFERENCE) -->
+        <header class="h-16 bg-white border-b border-slate-200/90 px-3 sm:px-6 lg:px-8 flex items-center justify-between z-10 custom-shadow flex-shrink-0">
+            <!-- Sisi Kiri: Emblem Madrasah Bulat + Nama Lembaga & Sistem PPDB -->
+            <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
+                <!-- Hamburger Button (Hanya Muncul di Mobile/Tablet) -->
+                <button onclick="toggleSidebar(true)" type="button" class="lg:hidden p-2 text-slate-600 hover:text-emerald-700 hover:bg-slate-100 rounded-lg transition" title="Buka Menu">
+                    <i class="fa-solid fa-bars text-xl"></i>
+                </button>
+
+                <!-- Logo RA Tunas Cendekia -->
+                <div class="w-9 h-9 rounded-full bg-emerald-50 border border-emerald-300 p-0.5 flex items-center justify-center flex-shrink-0 shadow-xs">
+                    <img src="/static/img/logotk.png?v=5" alt="Logo RA Tunas Cendekia" class="w-full h-full object-contain">
+                </div>
+
+                <div class="min-w-0">
+                    <h2 class="font-extrabold text-xs sm:text-sm text-slate-900 leading-tight truncate">
+                        RA Tunas Cendekia
+                    </h2>
+                    <span class="text-[10px] sm:text-xs text-slate-500 font-medium block truncate">
+                        Sistem PPDB
+                    </span>
+                </div>
+            </div>
+
+            <!-- Sisi Kanan: Kalender Tanggal/Waktu + Bell Notifikasi + Profile Akun -->
+            <div class="flex items-center gap-2 sm:gap-5 flex-shrink-0">
+                <!-- Waktu & Tanggal Realtime (Sesuai Desain Gambar: Icon Kalender Hijau) -->
+                <div class="hidden md:flex items-center gap-2.5 text-xs text-slate-600">
+                    <i class="fa-regular fa-calendar text-emerald-600 text-base"></i>
+                    <div class="leading-tight text-right">
+                        <div class="font-semibold text-slate-700">{{.CurrentTimeWIB}}</div>
+                    </div>
+                </div>
+
+                <!-- Notifikasi Lonceng (Icon Bell dengan Badge Merah 3) -->
+                <div class="relative">
+                    <a href="/dashboard" class="w-9 h-9 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 hover:text-emerald-700 transition" title="Notifikasi Sistem">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                    </a>
+                    <!-- Badge Notifikasi Merah 3 -->
+                    <span class="absolute top-1.5 right-1 w-4 h-4 bg-red-600 text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-xs">
+                        3
+                    </span>
+                </div>
+
+                <!-- User Profile & Account Menu -->
+                <div class="relative flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l border-slate-200">
+                    <button type="button" onclick="toggleAccountMenu()" aria-label="Menu profil" aria-haspopup="true" aria-expanded="false" id="accountMenuButton"
+                        class="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center font-bold text-sm flex-shrink-0 hover:bg-emerald-50 hover:border-emerald-300 transition">
+                        <i class="fa-regular fa-user"></i>
+                    </button>
+                    <div class="text-left hidden sm:block">
+                        <div class="text-xs font-bold text-slate-800 leading-tight truncate max-w-[140px]">
+                            {{if eq .CurrentUser.Role "student"}}{{.CurrentUser.FullName}}{{else}}Admin Sekolah{{end}}
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-medium leading-none mt-0.5">
+                            {{if eq .CurrentUser.Role "student"}}Siswa{{else}}Operator{{end}}
+                        </div>
+                    </div>
+                    <!-- Chevron Down Icon -->
+                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 hidden sm:inline-block"></i>
+
+                    <a href="/ubah-kata-sandi" title="Ubah kata sandi" class="hidden md:flex ml-1 p-1.5 sm:px-2.5 sm:py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold items-center gap-1 transition">
+                        <i class="fa-solid fa-key text-xs"></i>
+                        <span class="hidden md:inline text-[11px]">Ubah Sandi</span>
+                    </a>
+
+                    <!-- Tombol Keluar (Logout) -->
+                    <a href="/logout" title="Keluar / Logout" class="hidden md:flex ml-1 p-1.5 sm:px-2.5 sm:py-1 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs font-bold items-center gap-1 transition">
+                        <i class="fa-solid fa-power-off text-xs"></i>
+                        <span class="hidden md:inline text-[11px]">Keluar</span>
+                    </a>
+                    <div id="accountMenu" class="hidden md:hidden absolute right-0 top-full mt-2 w-48 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl z-50">
+                        <a href="/ubah-kata-sandi" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700">
+                            <i class="fa-solid fa-key w-4 text-center text-emerald-600"></i><span>Ubah Sandi</span>
+                        </a>
+                        <a href="/logout" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50">
+                            <i class="fa-solid fa-power-off w-4 text-center"></i><span>Keluar</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- KONTEN HALAMAN UTAMA -->
+        <main class="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-3 sm:p-5 lg:p-7 pb-24 lg:pb-8">
+            <div class="max-w-7xl mx-auto w-full min-w-0">
+                {{template "content" .}}
+            </div>
+
+            <!-- Footer Bottom Note -->
+            <footer class="mt-8 pt-4 border-t border-slate-200/80 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-500 gap-2 text-center sm:text-left mb-6 lg:mb-0">
+                <div>
+                    Sistem PPDB v1.0 &bull; RA Tunas Cendekia (NPSN: {{.School.NPSN}} - NSM: {{.School.NSM}})
+                </div>
+                <div>
+                    &copy; 2026. Semua hak cipta dilindungi &bull; Kemenag RI
+                </div>
+            </footer>
+        </main>
+
+        <!-- MOBILE BOTTOM NAVIGATION (KHUSUS LAYAR HP) -->
+        <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200 px-1 py-1.5 flex items-center justify-around shadow-lg">
+            {{if eq .CurrentUser.Role "student"}}
+            <a href="/profile-siswa" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "profile_siswa"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-id-card text-base mb-0.5"></i>
+                <span>Profil</span>
+            </a>
+            <a href="/student/status" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "student_status"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-address-card text-base mb-0.5"></i>
+                <span>KTS</span>
+            </a>
+            <a href="/student/rdm" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "student_rdm"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-book-bookmark text-base mb-0.5"></i>
+                <span>RDM</span>
+            </a>
+            <a href="/student/ijazah" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "student_ijazah"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-file-shield text-base mb-0.5"></i>
+                <span>Ijazah</span>
+            </a>
+            {{else}}
+            <a href="/dashboard" class="flex flex-col items-center py-1 px-2 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "dashboard"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-house text-base mb-0.5"></i>
+                <span>Home</span>
+            </a>
+            <a href="/generate-password" class="flex flex-col items-center py-1 px-2 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "generate_password"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-key text-base mb-0.5"></i>
+                <span>Password</span>
+            </a>
+            <a href="/formulir-ppdb" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "formulir_ppdb"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-file-lines text-base mb-0.5"></i>
+                <span>PPDB</span>
+            </a>
+            <a href="/siswa-aktif" class="flex flex-col items-center py-1 px-2.5 rounded-lg text-[10px] font-bold transition {{if eq .ActiveMenu "siswa_aktif"}}text-emerald-700 bg-emerald-50{{else}}text-slate-500 hover:text-slate-800{{end}}">
+                <i class="fa-solid fa-users text-base mb-0.5"></i>
+                <span>Aktif</span>
+            </a>
+            {{end}}
+        </nav>
+    </div>
+
+    <!-- JAVASCRIPT LOGIKA TOGGLE SIDEBAR MOBILE -->
+    <script>
+        function toggleAccountMenu(force) {
+            const menu = document.getElementById('accountMenu');
+            const button = document.getElementById('accountMenuButton');
+            const shouldOpen = typeof force === 'boolean' ? force : menu.classList.contains('hidden');
+            menu.classList.toggle('hidden', !shouldOpen);
+            button.setAttribute('aria-expanded', String(shouldOpen));
+        }
+
+        document.addEventListener('click', function (event) {
+            const menu = document.getElementById('accountMenu');
+            const button = document.getElementById('accountMenuButton');
+            if (!menu.contains(event.target) && !button.contains(event.target)) toggleAccountMenu(false);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape') toggleAccountMenu(false);
+        });
+
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('mainSidebar');
+            const backdrop = document.getElementById('mobileBackdrop');
+            if (show) {
+                sidebar.classList.remove('-translate-x-full');
+                backdrop.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
+        }
+    </script>
+    <script>
+        document.querySelectorAll('form[data-uppercase="true"]').forEach(function (form) {
+            form.querySelectorAll('input:not([type="email"]):not([type="date"]):not([type="hidden"]):not([type="password"]):not([type="file"]):not([type="checkbox"]), textarea').forEach(function (field) {
+                field.style.textTransform = 'uppercase';
+                field.addEventListener('input', function () {
+                    const start = field.selectionStart;
+                    const end = field.selectionEnd;
+                    field.value = field.value.toLocaleUpperCase('id-ID');
+                    if (start !== null && end !== null) field.setSelectionRange(start, end);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
